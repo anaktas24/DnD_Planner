@@ -3,6 +3,7 @@ import { Sword, Shield, Clock, Menu } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isPast } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
+import { ToolsMenu, ProfileButton } from './ToolsMenu'
 
 interface Props {
   onMenuClick: () => void
@@ -75,19 +76,25 @@ export function CampaignHeader({ onMenuClick }: Props) {
           )}
         </div>
 
-        <div className="flex items-center gap-3 md:gap-6 text-sm">
-          <div className="flex items-center gap-1.5 text-stone-300">
-            <Shield className="w-4 h-4 text-amber-600" />
-            <span className="hidden sm:inline">Session </span>
-            <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span>
-          </div>
-          {countdown && (
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-3 md:gap-6 text-sm">
             <div className="flex items-center gap-1.5 text-stone-300">
-              <Clock className="w-4 h-4 text-amber-600" />
-              <span className="hidden sm:inline">Next </span>
-              <span className="text-amber-400 font-bold text-xs md:text-sm">{countdown}</span>
+              <Shield className="w-4 h-4 text-amber-600" />
+              <span className="hidden sm:inline">Session </span>
+              <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span>
             </div>
-          )}
+            {countdown && (
+              <div className="flex items-center gap-1.5 text-stone-300">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span className="hidden sm:inline">Next </span>
+                <span className="text-amber-400 font-bold text-xs md:text-sm">{countdown}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-4">
+            <ToolsMenu />
+            <ProfileButton />
+          </div>
         </div>
       </div>
     </header>

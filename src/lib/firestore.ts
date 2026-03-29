@@ -76,6 +76,24 @@ export async function setVote(
   }
 }
 
+// ── Bulk operations ───────────────────────────────────────────────────────────
+
+export async function clearAllAvailability(): Promise<void> {
+  const snap = await import('firebase/firestore').then(({ getDocs, collection: col }) =>
+    getDocs(col(db, 'campaigns', CAMPAIGN_ID, 'players'))
+  )
+  const { writeBatch, doc: d } = await import('firebase/firestore')
+  const batch = writeBatch(db)
+  snap.docs.forEach((docSnap) => {
+    batch.update(d(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
+      availability: [],
+      confirmedDates: [],
+      declinedDates: [],
+    })
+  })
+  await batch.commit()
+}
+
 // ── Date Poll ─────────────────────────────────────────────────────────────────
 
 export async function voteForDate(playerId: string, date: string, allDates: string[]): Promise<void> {
