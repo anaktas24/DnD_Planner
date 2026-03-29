@@ -132,10 +132,15 @@ export function Calendar() {
                 {availablePlayers.map((p) => (
                   <span
                     key={p.id}
-                    className="text-[9px] leading-tight font-medium truncate rounded px-0.5"
-                    style={{ color: p.color }}
+                    className="flex items-center gap-0.5"
                   >
-                    {p.characterName || p.name}
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.color }} />
+                    <span
+                      className="text-[9px] leading-tight font-medium truncate"
+                      style={{ color: p.color }}
+                    >
+                      {p.characterName || p.name}
+                    </span>
                   </span>
                 ))}
               </div>

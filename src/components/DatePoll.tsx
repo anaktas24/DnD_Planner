@@ -27,6 +27,8 @@ export function DatePoll() {
   const votes = campaign?.dateVotes ?? {}
   const myVote = Object.entries(votes).find(([, ids]) => ids.includes(myId ?? ''))
   const isMultiple = greenDates.length > 1
+  const me = players.find((p) => p.id === myId)
+  const hasMarkedDates = (me?.availability.length ?? 0) > 0
 
   async function vote(date: string) {
     if (!myId) return
@@ -46,11 +48,13 @@ export function DatePoll() {
           <CalendarCheck className="w-4 h-4 text-amber-500" />
         )}
         <p className="text-amber-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
-          {isMultiple ? 'Multiple dates available — vote for one!' : 'A date works for everyone!'}
+          {isMultiple ? 'Multiple dates available — vote for one when all have picked the dates!' : 'We found a date!'}
         </p>
       </div>
 
-      {isMultiple ? (
+      {!hasMarkedDates ? (
+        <p className="text-stone-500 text-sm italic">Mark your availability on the calendar before voting.</p>
+      ) : isMultiple ? (
         <>
           <div className="flex flex-col gap-2">
             {greenDates.map((date) => {
@@ -83,7 +87,7 @@ export function DatePoll() {
               )
             })}
           </div>
-          <p className="text-stone-600 text-xs mt-2">Poll closes when everyone votes. Tie goes to the earliest date.</p>
+          <p className="text-amber-600 text-xl mt-2">Poll closes when everyone votes.</p>
         </>
       ) : (
         <div className="flex items-center justify-between">
