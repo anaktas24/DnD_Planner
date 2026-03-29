@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dungeon-900 text-stone-200 min-h-screen;
+    font-family: 'IM Fell English', Georgia, serif;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply bg-dungeon-900 border border-amber-900/60 text-stone-200 rounded-lg px-3 py-2 text-sm
+      placeholder-stone-600 focus:outline-none focus:border-amber-600 transition-colors w-full;
+  }
+
+  .btn-primary {
+    @apply bg-amber-700 hover:bg-amber-600 text-amber-100 font-semibold rounded-lg px-4 py-2
+      transition-colors cursor-pointer text-sm tracking-wide;
+  }
+}
