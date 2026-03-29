@@ -1,18 +1,24 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { X, Check, XCircle, MinusCircle, BookOpen } from 'lucide-react'
+import { X, Check, XCircle, MinusCircle, BookOpen, CalendarCheck } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { upsertNote } from '../lib/firestore'
+import { upsertNote, updateCampaign } from '../lib/firestore'
 import type { SessionNote } from '../types'
 
 interface Props {
   date: string
   onClose: () => void
   onVote: (playerId: string, vote: 'confirm' | 'decline' | 'clear') => void
+  isAllFree: boolean
 }
 
-export function DayModal({ date, onClose, onVote }: Props) {
+export function DayModal({ date, onClose, onVote, isAllFree }: Props) {
   const { players, notes, campaign } = useCampaignStore()
+  const isNextSession = campaign?.nextSessionDate === date
+
+  async function setNextSession() {
+    await updateCampaign({ nextSessionDate: isNextSession ? null : date })
+  }
   const existingNote = notes.find((n) => n.date === date)
   const [noteForm, setNoteForm] = useState<Partial<SessionNote>>(existingNote ?? {
     date,
@@ -48,6 +54,21 @@ export function DayModal({ date, onClose, onVote }: Props) {
           </h3>
           <button onClick={onClose}><X className="w-5 h-5 text-stone-500 hover:text-stone-300" /></button>
         </div>
+
+        {/* Set as next session */}
+        {(isAllFree || isNextSession) && (
+          <button
+            onClick={setNextSession}
+            className={`w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2 mb-4 text-sm font-semibold transition-colors ${
+              isNextSession
+                ? 'bg-emerald-800/60 text-emerald-300 border border-emerald-600'
+                : 'bg-emerald-900/30 text-emerald-400 border border-emerald-800 hover:bg-emerald-800/40'
+            }`}
+          >
+            <CalendarCheck className="w-4 h-4" />
+            {isNextSession ? 'Next session set! (click to unset)' : 'Set as next session'}
+          </button>
+        )}
 
         {/* Vote section */}
         <div className="mb-4">

@@ -161,6 +161,7 @@ export function Calendar() {
           date={selectedDate}
           onClose={() => setSelectedDate(null)}
           onVote={(playerId, vote) => setVote(playerId, selectedDate, vote)}
+          isAllFree={freeDates.has(selectedDate)}
         />
       )}
     </div>

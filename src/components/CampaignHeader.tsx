@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sword, Shield, Clock, Menu } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isPast } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
@@ -12,6 +12,13 @@ export function CampaignHeader({ onMenuClick }: Props) {
   const campaign = useCampaignStore((s) => s.campaign)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '' })
+  const [, setTick] = useState(0)
+
+  // Re-render every minute to keep countdown fresh
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   if (!campaign) return null
 
