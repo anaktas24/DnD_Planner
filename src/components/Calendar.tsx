@@ -124,15 +124,16 @@ export function Calendar() {
                 {format(day, 'd')}
               </span>
 
-              {/* Player availability dots */}
-              <div className="flex flex-wrap gap-0.5 justify-center mt-auto mb-0.5">
+              {/* Player availability names */}
+              <div className="flex flex-col gap-0.5 w-full mt-auto px-0.5 mb-0.5">
                 {availablePlayers.map((p) => (
                   <span
                     key={p.id}
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: p.color }}
-                    title={p.characterName || p.name}
-                  />
+                    className="text-[9px] leading-tight font-medium truncate rounded px-0.5"
+                    style={{ color: p.color }}
+                  >
+                    {p.characterName || p.name}
+                  </span>
                 ))}
               </div>
             </button>
@@ -145,10 +146,6 @@ export function Calendar() {
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-emerald-900/50 border border-emerald-600/60 inline-block" />
           All players free
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-stone-400 inline-block" />
-          Player available
         </span>
         {players.map((p) => (
           <span key={p.id} className="flex items-center gap-1.5">
