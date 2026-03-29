@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { toggleAvailability, setVote } from '../lib/firestore'
 import { DayModal } from './DayModal'
+import { DatePoll } from './DatePoll'
 
 export function Calendar() {
   const [month, setMonth] = useState(new Date())
@@ -33,7 +34,9 @@ export function Calendar() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 p-3 md:p-6">
+    <div className="flex-1 flex flex-col min-w-0">
+      <DatePoll />
+      <div className="flex-1 flex flex-col p-3 md:p-6">
       {/* Month nav */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -164,6 +167,7 @@ export function Calendar() {
           isAllFree={freeDates.has(selectedDate)}
         />
       )}
+    </div>
     </div>
   )
 }

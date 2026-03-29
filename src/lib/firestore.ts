@@ -76,6 +76,28 @@ export async function setVote(
   }
 }
 
+// ── Date Poll ─────────────────────────────────────────────────────────────────
+
+export async function voteForDate(playerId: string, date: string, allDates: string[]): Promise<void> {
+  const ref = doc(db, 'campaigns', CAMPAIGN_ID)
+  const snap = await getDoc(ref)
+  const current: Record<string, string[]> = snap.data()?.dateVotes ?? {}
+
+  // Remove this player's vote from all other dates
+  const updated: Record<string, string[]> = {}
+  for (const d of allDates) {
+    updated[d] = (current[d] ?? []).filter((id) => id !== playerId)
+  }
+  // Add vote to chosen date
+  if (!updated[date].includes(playerId)) updated[date].push(playerId)
+
+  await updateDoc(ref, { dateVotes: updated })
+}
+
+export async function clearDateVotes(): Promise<void> {
+  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), { dateVotes: {} })
+}
+
 // ── Session Notes ─────────────────────────────────────────────────────────────
 
 export function subscribeNotes(cb: (notes: SessionNote[]) => void): Unsubscribe {

@@ -26,4 +26,5 @@ export interface Campaign {
   sessionCount: number
   nextSessionDate: string | null
   createdAt: string
+  dateVotes: Record<string, string[]> // date -> playerIds who voted for it
 }
