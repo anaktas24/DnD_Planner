@@ -16,8 +16,8 @@ export default function App() {
   const [playerId, setPlayerId] = useState<string | null>(
     () => localStorage.getItem(PLAYER_ID_KEY)
   )
+  const [rosterOpen, setRosterOpen] = useState(false)
 
-  // Auto-initialise campaign doc only if it doesn't exist yet
   useEffect(() => {
     import('./lib/firebase').then(({ db }) => {
       import('firebase/firestore').then(({ doc, getDoc }) => {
@@ -47,7 +47,6 @@ export default function App() {
     setActivePlayer(id)
   }
 
-  // Set active player from localStorage on mount
   useEffect(() => {
     if (playerId) setActivePlayer(playerId)
   }, [playerId, setActivePlayer])
@@ -66,9 +65,23 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-dungeon-900">
-      <CampaignHeader />
+      <CampaignHeader onMenuClick={() => setRosterOpen(true)} />
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        <PlayerRoster />
+        {/* Desktop sidebar */}
+        <div className="hidden md:block">
+          <PlayerRoster />
+        </div>
+
+        {/* Mobile drawer */}
+        {rosterOpen && (
+          <div className="fixed inset-0 z-40 md:hidden flex">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setRosterOpen(false)} />
+            <div className="relative z-10">
+              <PlayerRoster onClose={() => setRosterOpen(false)} />
+            </div>
+          </div>
+        )}
+
         <Calendar />
       </div>
     </div>

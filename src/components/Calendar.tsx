@@ -33,7 +33,7 @@ export function Calendar() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 p-6">
+    <div className="flex-1 flex flex-col min-w-0 p-3 md:p-6">
       {/* Month nav */}
       <div className="flex items-center justify-between mb-6">
         <button

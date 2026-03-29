@@ -21,7 +21,11 @@ const COLOR_PRESETS = [
 
 const PLAYER_ID_KEY = 'dnd_player_id'
 
-export function PlayerRoster() {
+interface Props {
+  onClose?: () => void
+}
+
+export function PlayerRoster({ onClose }: Props) {
   const { players, activePlayerId, setActivePlayer } = useCampaignStore()
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null)
   const [form, setForm] = useState<Partial<Player>>({})
@@ -42,23 +46,30 @@ export function PlayerRoster() {
   }
 
   return (
-    <aside className="w-64 shrink-0 bg-dungeon-900 border-r border-amber-900 p-4 flex flex-col gap-4">
+    <aside className="w-64 shrink-0 bg-dungeon-900 border-r border-amber-900 p-4 flex flex-col gap-4 h-full overflow-y-auto">
       <div className="flex items-center justify-between">
         <h2 className="text-amber-500 font-bold uppercase tracking-widest text-xs">
           Adventurers
         </h2>
-        {myId && (
-          <button onClick={openEdit} className="text-stone-600 hover:text-amber-500 transition-colors" title="Edit your character">
-            <Settings className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {myId && (
+            <button onClick={openEdit} className="text-stone-600 hover:text-amber-500 transition-colors" title="Edit your character">
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+          {onClose && (
+            <button onClick={onClose} className="text-stone-600 hover:text-stone-300 transition-colors md:hidden">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
         {players.map((p) => (
           <button
             key={p.id}
-            onClick={() => setActivePlayer(activePlayerId === p.id ? null : p.id)}
+            onClick={() => { setActivePlayer(activePlayerId === p.id ? null : p.id); onClose?.() }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
               activePlayerId === p.id
                 ? 'bg-amber-900/40 ring-1 ring-amber-600'
