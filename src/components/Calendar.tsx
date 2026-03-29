@@ -117,7 +117,7 @@ export function Calendar() {
               }
             >
               <span
-                className={`text-xs font-medium ${
+                className={`text-base font-semibold ${
                   today ? 'text-amber-400' : isFree ? 'text-emerald-300' : 'text-stone-400'
                 }`}
               >

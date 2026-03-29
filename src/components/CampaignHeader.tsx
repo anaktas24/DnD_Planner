@@ -7,7 +7,7 @@ import { updateCampaign } from '../lib/firestore'
 export function CampaignHeader() {
   const campaign = useCampaignStore((s) => s.campaign)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ name: '', dmName: '' })
+  const [form, setForm] = useState({ name: '' })
 
   if (!campaign) return null
 
@@ -18,7 +18,7 @@ export function CampaignHeader() {
       : null
 
   function startEdit() {
-    setForm({ name: campaign!.name, dmName: campaign!.dmName })
+    setForm({ name: campaign!.name })
     setEditing(true)
   }
 
@@ -40,13 +40,6 @@ export function CampaignHeader() {
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Campaign name"
               />
-              <span className="text-amber-600">·</span>
-              <input
-                className="bg-dungeon-800 border border-amber-700 text-amber-100 rounded px-2 py-1 text-sm"
-                value={form.dmName}
-                onChange={(e) => setForm((f) => ({ ...f, dmName: e.target.value }))}
-                placeholder="DM name"
-              />
               <button onClick={save} className="text-amber-400 hover:text-amber-200 text-sm px-2 py-1 border border-amber-700 rounded">
                 Save
               </button>
@@ -63,9 +56,6 @@ export function CampaignHeader() {
               >
                 {campaign.name}
               </h1>
-              <p className="text-stone-400 text-sm">
-                DM: <span className="text-stone-300">{campaign.dmName}</span>
-              </p>
             </div>
           )}
         </div>

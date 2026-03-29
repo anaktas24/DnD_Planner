@@ -3,6 +3,7 @@ export interface Player {
   name: string
   characterName: string
   characterClass: string
+  characterRace: string
   color: string
   availability: string[] // ISO date strings "YYYY-MM-DD"
   confirmedDates: string[]
