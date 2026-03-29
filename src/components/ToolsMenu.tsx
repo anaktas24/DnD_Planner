@@ -38,7 +38,7 @@ export function ToolsMenu() {
   }
 
   async function resetSession() {
-    await updateCampaign({ nextSessionDate: null })
+    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: { Morning: [], Afternoon: [], Evening: [] } })
     setOpen(false)
   }
 
@@ -56,7 +56,7 @@ export function ToolsMenu() {
 
   function copyDiscordSummary() {
     const next = campaign?.nextSessionDate
-      ? format(parseISO(campaign.nextSessionDate), 'EEEE, MMMM d')
+      ? `${format(parseISO(campaign.nextSessionDate), 'EEEE, MMMM d')}${campaign.nextSessionTime ? ` — ${campaign.nextSessionTime}` : ''}`
       : 'TBD'
     const confirmed = players.filter((p) => campaign?.nextSessionDate && p.confirmedDates?.includes(campaign.nextSessionDate))
     const declined = players.filter((p) => campaign?.nextSessionDate && p.declinedDates?.includes(campaign.nextSessionDate))

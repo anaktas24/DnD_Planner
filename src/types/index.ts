@@ -19,12 +19,16 @@ export interface SessionNote {
   nextLocation: string
 }
 
+export type TimeSlot = 'Morning' | 'Afternoon' | 'Evening'
+
 export interface Campaign {
   id: string
   name: string
   dmName: string
   sessionCount: number
   nextSessionDate: string | null
+  nextSessionTime: TimeSlot | null
   createdAt: string
   dateVotes: Record<string, string[]> // date -> playerIds who voted for it
+  timeVotes: Record<TimeSlot, string[]> // slot -> playerIds who voted for it
 }

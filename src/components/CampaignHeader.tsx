@@ -88,6 +88,9 @@ export function CampaignHeader({ onMenuClick }: Props) {
                 <Clock className="w-4 h-4 text-amber-600" />
                 <span className="hidden sm:inline">Next </span>
                 <span className="text-amber-400 font-bold text-xs md:text-sm">{countdown}</span>
+                {campaign.nextSessionTime && (
+                  <span className="text-amber-600 text-xs hidden sm:inline">· {campaign.nextSessionTime}</span>
+                )}
               </div>
             )}
           </div>

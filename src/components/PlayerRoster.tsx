@@ -28,8 +28,9 @@ export function PlayerRoster({ onClose }: Props) {
         {players.map((p) => (
           <button
             key={p.id}
-            onClick={() => { setActivePlayer(activePlayerId === p.id ? null : p.id); onClose?.() }}
+            onClick={() => { if (p.id === myId) { setActivePlayer(activePlayerId === p.id ? null : p.id); onClose?.() } }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
+              p.id !== myId ? 'cursor-default opacity-75' :
               activePlayerId === p.id
                 ? 'bg-amber-900/40 ring-1 ring-amber-600'
                 : 'hover:bg-dungeon-800'
