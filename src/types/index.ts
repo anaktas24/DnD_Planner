@@ -23,10 +23,16 @@ export type TimeSlot = 'Morning' | 'Afternoon' | 'Evening'
 
 export type Role = 'admin' | 'editor' | 'player'
 
+export interface ArcEntry {
+  name: string
+  startedAt: string // ISO date string
+}
+
 export interface Campaign {
   id: string
   name: string
   dmName: string
+  arcHistory: ArcEntry[] // past arc names, newest last
   sessionCount: number
   nextSessionDate: string | null
   nextSessionTime: TimeSlot | null
