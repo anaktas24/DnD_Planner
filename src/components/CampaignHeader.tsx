@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Sword, Shield, Clock, Menu } from 'lucide-react'
+import { Sword, Shield, Clock, Menu, Map } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isPast } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
@@ -7,9 +7,11 @@ import { ToolsMenu, ProfileButton } from './ToolsMenu'
 
 interface Props {
   onMenuClick: () => void
+  onMapClick: () => void
+  currentView: 'home' | 'map'
 }
 
-export function CampaignHeader({ onMenuClick }: Props) {
+export function CampaignHeader({ onMenuClick, onMapClick, currentView }: Props) {
   const campaign = useCampaignStore((s) => s.campaign)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '' })
@@ -94,6 +96,20 @@ export function CampaignHeader({ onMenuClick }: Props) {
               </div>
             )}
           </div>
+          <button
+            onClick={onMapClick}
+            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors ${
+              currentView === 'map'
+                ? 'bg-amber-900/40 text-amber-400'
+                : 'text-stone-500 hover:text-amber-400'
+            }`}
+            title="The story so far..."
+          >
+            <Map className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline text-xs font-medium" style={{ fontFamily: 'Cinzel, serif' }}>
+              The story so far...
+            </span>
+          </button>
           <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-4">
             <ToolsMenu />
             <ProfileButton />

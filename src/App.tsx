@@ -6,6 +6,7 @@ import { CampaignHeader } from './components/CampaignHeader'
 import { PlayerRoster } from './components/PlayerRoster'
 import { Calendar } from './components/Calendar'
 import { JoinScreen } from './components/JoinScreen'
+import { MapPage } from './components/MapPage'
 
 const PLAYER_ID_KEY = 'dnd_player_id'
 
@@ -17,6 +18,7 @@ export default function App() {
     () => localStorage.getItem(PLAYER_ID_KEY)
   )
   const [rosterOpen, setRosterOpen] = useState(false)
+  const [currentView, setCurrentView] = useState<'home' | 'map'>('home')
 
   useEffect(() => {
     import('./lib/firebase').then(({ db }) => {
@@ -65,24 +67,34 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-dungeon-900">
-      <CampaignHeader onMenuClick={() => setRosterOpen(true)} />
+      <CampaignHeader
+        onMenuClick={() => setRosterOpen(true)}
+        onMapClick={() => setCurrentView((v) => v === 'map' ? 'home' : 'map')}
+        currentView={currentView}
+      />
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Desktop sidebar */}
-        <div className="hidden md:block">
-          <PlayerRoster />
-        </div>
-
-        {/* Mobile drawer */}
-        {rosterOpen && (
-          <div className="fixed inset-0 z-40 md:hidden flex">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setRosterOpen(false)} />
-            <div className="relative z-10">
-              <PlayerRoster onClose={() => setRosterOpen(false)} />
+        {currentView === 'home' ? (
+          <>
+            {/* Desktop sidebar */}
+            <div className="hidden md:block">
+              <PlayerRoster />
             </div>
-          </div>
-        )}
 
-        <Calendar />
+            {/* Mobile drawer */}
+            {rosterOpen && (
+              <div className="fixed inset-0 z-40 md:hidden flex">
+                <div className="absolute inset-0 bg-black/60" onClick={() => setRosterOpen(false)} />
+                <div className="relative z-10">
+                  <PlayerRoster onClose={() => setRosterOpen(false)} />
+                </div>
+              </div>
+            )}
+
+            <Calendar />
+          </>
+        ) : (
+          <MapPage onBack={() => setCurrentView('home')} />
+        )}
       </div>
     </div>
   )

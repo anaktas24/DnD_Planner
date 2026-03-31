@@ -31,4 +31,5 @@ export interface Campaign {
   createdAt: string
   dateVotes: Record<string, string[]> // date -> playerIds who voted for it
   timeVotes: Record<TimeSlot, string[]> // slot -> playerIds who voted for it
+  mapImageUrl?: string
 }

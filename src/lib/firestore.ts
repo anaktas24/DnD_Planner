@@ -35,6 +35,11 @@ export function subscribePlayers(cb: (players: Player[]) => void): Unsubscribe {
   })
 }
 
+export async function deletePlayer(playerId: string): Promise<void> {
+  const { deleteDoc } = await import('firebase/firestore')
+  await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', playerId))
+}
+
 export async function upsertPlayer(player: Omit<Player, 'id'> & { id?: string }): Promise<string> {
   const id = player.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', id), { ...player, id }, { merge: true })
