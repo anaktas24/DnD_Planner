@@ -23,6 +23,7 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
   const [lastSeen, setLastSeen] = useState(() => localStorage.getItem(BLOG_SEEN_KEY) ?? '')
 
   const hasUnreadBlog = blogPosts.length > 0 && (lastSeen === '' || blogPosts.some((p) => p.createdAt > lastSeen))
+  console.log('[blog glow]', { blogPostsCount: blogPosts.length, lastSeen, hasUnreadBlog })
 
   function navigateTo(view: View) {
     if (view === 'blog') {
@@ -115,11 +116,12 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
   }
 
   return (
-    <header className="bg-dungeon-900 border-b-2 border-amber-700 px-4 md:px-6 py-3">
-      <div className="flex items-center justify-between gap-4">
+    <header className="bg-dungeon-900 border-b-2 border-amber-700 px-4 md:px-6 py-2">
+      {/* Main row */}
+      <div className="flex items-center justify-between gap-2">
 
         {/* Left */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <button onClick={onMenuClick} className="md:hidden text-amber-600 hover:text-amber-400 transition-colors shrink-0">
             <Menu className="w-6 h-6" />
           </button>
@@ -128,7 +130,7 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
             className="text-amber-500 hover:text-amber-300 transition-colors shrink-0"
             title="Home"
           >
-            <Dices className="w-8 h-8" />
+            <Dices className="w-7 h-7 md:w-8 md:h-8" />
           </button>
 
           {/* Campaign name dropdown */}
@@ -138,7 +140,7 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
               className="flex items-center gap-1.5 group min-w-0"
             >
               <h1
-                className="text-lg md:text-xl font-bold text-amber-400 group-hover:text-amber-300 truncate"
+                className="text-base md:text-xl font-bold text-amber-400 group-hover:text-amber-300 truncate max-w-[130px] sm:max-w-[220px] md:max-w-none"
                 style={{ fontFamily: 'Cinzel Decorative, serif' }}
               >
                 {campaign.name}
@@ -284,7 +286,7 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
 
           <button
             onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
-            className={`relative text-base font-semibold transition-colors hidden sm:block ${
+            className={`relative text-sm md:text-base font-semibold transition-colors hidden sm:block ${
               currentView === 'blog'
                 ? 'text-amber-300 underline underline-offset-2'
                 : hasUnreadBlog
@@ -310,6 +312,41 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
             <ToolsMenu onNavigate={navigateTo} />
           </div>
         </div>
+      </div>
+
+      {/* Mobile second row */}
+      <div className="flex sm:hidden items-center justify-between mt-1.5 pt-1.5 border-t border-amber-900/30">
+        <div className="flex items-center gap-1.5 text-stone-400 text-xs">
+          <Swords className="w-3.5 h-3.5 text-amber-600" />
+          <span>Session <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span></span>
+          {countdown && (
+            <>
+              <span className="text-stone-600">·</span>
+              <span className="text-amber-400 font-semibold">{countdown}</span>
+            </>
+          )}
+        </div>
+        <button
+          onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
+          className={`relative text-xs font-semibold transition-colors ${
+            currentView === 'blog'
+              ? 'text-amber-300 underline underline-offset-2'
+              : hasUnreadBlog
+              ? 'text-amber-200'
+              : 'text-amber-400'
+          }`}
+          style={{
+            fontFamily: 'Cinzel, serif',
+            ...(hasUnreadBlog && currentView !== 'blog'
+              ? { textShadow: '0 0 10px rgba(251,191,36,1), 0 0 24px rgba(251,191,36,0.6)' }
+              : {}),
+          }}
+        >
+          The Story So Far
+          {hasUnreadBlog && currentView !== 'blog' && (
+            <span className="absolute -top-1 -right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+          )}
+        </button>
       </div>
     </header>
   )

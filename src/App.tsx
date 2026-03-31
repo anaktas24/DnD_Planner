@@ -23,9 +23,11 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('home')
 
   useEffect(() => {
+    const timeout = setTimeout(() => setReady(true), 8000)
     import('./lib/firebase').then(({ db }) => {
       import('firebase/firestore').then(({ doc, getDoc }) => {
         getDoc(doc(db, 'campaigns', 'main')).then((snap) => {
+          clearTimeout(timeout)
           if (!snap.exists()) {
             updateCampaign({
               id: 'main',
@@ -34,13 +36,14 @@ export default function App() {
               sessionCount: 0,
               nextSessionDate: null,
               createdAt: new Date().toISOString(),
-            }).then(() => setReady(true))
+            }).then(() => setReady(true)).catch(() => setReady(true))
           } else {
             setReady(true)
           }
-        })
+        }).catch(() => { clearTimeout(timeout); setReady(true) })
       })
     })
+    return () => clearTimeout(timeout)
   }, [])
 
   const { setActivePlayer, campaign } = useCampaignStore()
