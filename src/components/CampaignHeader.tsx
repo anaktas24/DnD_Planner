@@ -284,21 +284,24 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
 
           <button
             onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
-            className={`text-base font-semibold transition-all hidden sm:block ${
+            className={`relative text-base font-semibold transition-colors hidden sm:block ${
               currentView === 'blog'
                 ? 'text-amber-300 underline underline-offset-2'
                 : hasUnreadBlog
-                ? 'text-amber-200 animate-pulse hover:text-amber-100'
+                ? 'text-amber-200 hover:text-amber-100'
                 : 'text-amber-400 hover:text-amber-300'
             }`}
             style={{
               fontFamily: 'Cinzel, serif',
               ...(hasUnreadBlog && currentView !== 'blog'
-                ? { textShadow: '0 0 8px rgba(251,191,36,0.9), 0 0 20px rgba(251,191,36,0.5)' }
+                ? { textShadow: '0 0 10px rgba(251,191,36,1), 0 0 24px rgba(251,191,36,0.6)' }
                 : {}),
             }}
           >
             The Story So Far
+            {hasUnreadBlog && currentView !== 'blog' && (
+              <span className="absolute -top-1 -right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+            )}
           </button>
 
           <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-3">

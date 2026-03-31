@@ -24,8 +24,9 @@ export function NotificationBell() {
 
   async function openPanel() {
     setOpen((o) => !o)
-    // Mark all unread as read
-    await Promise.all(unread.map((n) => markNotificationRead(n.id, myId)))
+    if (unread.length > 0 && myId) {
+      await Promise.all(unread.map((n) => markNotificationRead(n.id, myId).catch(() => {})))
+    }
   }
 
   return (
