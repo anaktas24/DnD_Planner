@@ -7,16 +7,20 @@ import {
   arrayUnion,
   arrayRemove,
   getDoc,
+  deleteDoc,
+  getDocs,
+  writeBatch,
+  orderBy,
+  query,
   Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Player, Campaign, SessionNote } from '../types'
+import type { Player, Campaign, SessionNote, BlogPost, Role } from '../types'
 
-const CAMPAIGN_ID = 'main' // single-campaign app for now
+const CAMPAIGN_ID = 'main'
 
 // ── Campaign ──────────────────────────────────────────────────────────────────
 
-// cb receives null when doc doesn't exist yet (not-setup state)
 export function subscribeCampaign(cb: (c: Campaign | null) => void): Unsubscribe {
   return onSnapshot(doc(db, 'campaigns', CAMPAIGN_ID), (snap) => {
     cb(snap.exists() ? (snap.data() as Campaign) : ({ name: '' } as Campaign))
@@ -27,6 +31,25 @@ export async function updateCampaign(data: Partial<Campaign>): Promise<void> {
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID), data, { merge: true })
 }
 
+// ── Roles ─────────────────────────────────────────────────────────────────────
+
+export async function setRole(playerId: string, role: Role): Promise<void> {
+  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), {
+    [`roles.${playerId}`]: role,
+  })
+}
+
+export async function claimAdmin(playerId: string): Promise<boolean> {
+  const snap = await getDoc(doc(db, 'campaigns', CAMPAIGN_ID))
+  const roles: Record<string, Role> = snap.data()?.roles ?? {}
+  const hasAdmin = Object.values(roles).includes('admin')
+  if (hasAdmin) return false
+  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), {
+    [`roles.${playerId}`]: 'admin',
+  })
+  return true
+}
+
 // ── Players ───────────────────────────────────────────────────────────────────
 
 export function subscribePlayers(cb: (players: Player[]) => void): Unsubscribe {
@@ -35,15 +58,27 @@ export function subscribePlayers(cb: (players: Player[]) => void): Unsubscribe {
   })
 }
 
-export async function deletePlayer(playerId: string): Promise<void> {
-  const { deleteDoc } = await import('firebase/firestore')
-  await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', playerId))
-}
-
 export async function upsertPlayer(player: Omit<Player, 'id'> & { id?: string }): Promise<string> {
   const id = player.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', id), { ...player, id }, { merge: true })
   return id
+}
+
+export async function kickPlayer(playerId: string): Promise<void> {
+  await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', playerId))
+  // Remove their role too
+  const snap = await getDoc(doc(db, 'campaigns', CAMPAIGN_ID))
+  const roles: Record<string, Role> = snap.data()?.roles ?? {}
+  delete roles[playerId]
+  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), { roles })
+}
+
+export async function resetPlayerAvailability(playerId: string): Promise<void> {
+  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', playerId), {
+    availability: [],
+    confirmedDates: [],
+    declinedDates: [],
+  })
 }
 
 export async function toggleAvailability(playerId: string, date: string): Promise<void> {
@@ -64,33 +99,21 @@ export async function setVote(
 ): Promise<void> {
   const ref = doc(db, 'campaigns', CAMPAIGN_ID, 'players', playerId)
   if (vote === 'confirm') {
-    await updateDoc(ref, {
-      confirmedDates: arrayUnion(date),
-      declinedDates: arrayRemove(date),
-    })
+    await updateDoc(ref, { confirmedDates: arrayUnion(date), declinedDates: arrayRemove(date) })
   } else if (vote === 'decline') {
-    await updateDoc(ref, {
-      declinedDates: arrayUnion(date),
-      confirmedDates: arrayRemove(date),
-    })
+    await updateDoc(ref, { declinedDates: arrayUnion(date), confirmedDates: arrayRemove(date) })
   } else {
-    await updateDoc(ref, {
-      confirmedDates: arrayRemove(date),
-      declinedDates: arrayRemove(date),
-    })
+    await updateDoc(ref, { confirmedDates: arrayRemove(date), declinedDates: arrayRemove(date) })
   }
 }
 
 // ── Bulk operations ───────────────────────────────────────────────────────────
 
 export async function clearAllAvailability(): Promise<void> {
-  const snap = await import('firebase/firestore').then(({ getDocs, collection: col }) =>
-    getDocs(col(db, 'campaigns', CAMPAIGN_ID, 'players'))
-  )
-  const { writeBatch, doc: d } = await import('firebase/firestore')
+  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
   const batch = writeBatch(db)
   snap.docs.forEach((docSnap) => {
-    batch.update(d(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
+    batch.update(doc(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
       availability: [],
       confirmedDates: [],
       declinedDates: [],
@@ -106,12 +129,10 @@ export async function voteForDate(playerId: string, date: string, allDates: stri
   const snap = await getDoc(ref)
   const current: Record<string, string[]> = snap.data()?.dateVotes ?? {}
 
-  // Remove this player's vote from all dates
   const updated: Record<string, string[]> = {}
   for (const d of allDates) {
     updated[d] = (current[d] ?? []).filter((id) => id !== playerId)
   }
-  // Add vote only if not deselecting (toggle)
   const alreadyVotedHere = (current[date] ?? []).includes(playerId)
   if (!alreadyVotedHere) updated[date].push(playerId)
 
@@ -138,10 +159,6 @@ export async function voteForTimeSlot(playerId: string, slot: string): Promise<v
   await updateDoc(ref, { timeVotes: updated })
 }
 
-export async function clearTimeVotes(): Promise<void> {
-  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), { timeVotes: {}, nextSessionTime: null })
-}
-
 // ── Session Notes ─────────────────────────────────────────────────────────────
 
 export function subscribeNotes(cb: (notes: SessionNote[]) => void): Unsubscribe {
@@ -153,4 +170,23 @@ export function subscribeNotes(cb: (notes: SessionNote[]) => void): Unsubscribe 
 export async function upsertNote(note: Omit<SessionNote, 'id'> & { id?: string }): Promise<void> {
   const id = note.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notes', id), { ...note, id }, { merge: true })
+}
+
+// ── Blog ──────────────────────────────────────────────────────────────────────
+
+export function subscribeBlog(cb: (posts: BlogPost[]) => void): Unsubscribe {
+  return onSnapshot(
+    query(collection(db, 'campaigns', CAMPAIGN_ID, 'blog'), orderBy('createdAt', 'desc')),
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BlogPost)))
+  )
+}
+
+export async function upsertBlogPost(post: Omit<BlogPost, 'id'> & { id?: string }): Promise<string> {
+  const id = post.id ?? crypto.randomUUID()
+  await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'blog', id), { ...post, id }, { merge: true })
+  return id
+}
+
+export async function deleteBlogPost(postId: string): Promise<void> {
+  await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'blog', postId))
 }

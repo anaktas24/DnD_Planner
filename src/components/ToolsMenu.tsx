@@ -1,15 +1,21 @@
 import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
-  Wrench, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check,
+  Settings, Play, XCircle, PlusCircle, ScrollText,
+  Trash2, UserX, Copy, Check, Shield,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearAllAvailability } from '../lib/firestore'
 
+type View = 'home' | 'blog' | 'admin'
+
 const PLAYER_ID_KEY = 'dnd_player_id'
 
-export function ToolsMenu() {
+interface ToolsMenuProps {
+  onNavigate: (view: View) => void
+}
+
+export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   const [open, setOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -120,6 +126,13 @@ export function ToolsMenu() {
       disabled: false,
       danger: true,
     },
+    {
+      icon: Shield,
+      label: 'Admin Panel',
+      sublabel: 'Manage campaign & players',
+      onClick: () => { onNavigate('admin'); setOpen(false) },
+      disabled: false,
+    },
   ]
 
   return (
@@ -130,7 +143,7 @@ export function ToolsMenu() {
           className={`p-2 rounded-lg transition-colors ${open ? 'bg-amber-900/40 text-amber-400' : 'text-stone-500 hover:text-amber-400'}`}
           title="Tools"
         >
-          <Wrench className="w-5 h-5" />
+          <Settings className="w-5 h-5" />
         </button>
 
         {open && (

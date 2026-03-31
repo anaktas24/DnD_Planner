@@ -1,18 +1,19 @@
 import { create } from 'zustand'
-import type { Player, Campaign, SessionNote } from '../types'
+import type { Player, Campaign, SessionNote, BlogPost } from '../types'
 
 interface CampaignStore {
   campaign: Campaign | null
   players: Player[]
   notes: SessionNote[]
+  blogPosts: BlogPost[]
   activePlayerId: string | null
 
   setCampaign: (c: Campaign | null) => void
   setPlayers: (p: Player[]) => void
   setNotes: (n: SessionNote[]) => void
+  setBlogPosts: (b: BlogPost[]) => void
   setActivePlayer: (id: string | null) => void
 
-  // Derived helpers
   allFreeDates: (month: Date) => string[]
   allGreenDates: () => string[]
   pollWinner: () => string | null
@@ -22,11 +23,13 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   campaign: null,
   players: [],
   notes: [],
+  blogPosts: [],
   activePlayerId: null,
 
   setCampaign: (campaign) => set({ campaign }),
   setPlayers: (players) => set({ players }),
   setNotes: (notes) => set({ notes }),
+  setBlogPosts: (blogPosts) => set({ blogPosts }),
   setActivePlayer: (id) => set({ activePlayerId: id }),
 
   allFreeDates: (month) => {
@@ -64,9 +67,8 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     if (totalPlayers === 0) return null
 
     const totalVotesCast = Object.values(votes).reduce((sum, ids) => sum + ids.length, 0)
-    if (totalVotesCast < totalPlayers) return null // not everyone voted yet
+    if (totalVotesCast < totalPlayers) return null
 
-    // Find date with most votes, tie-break by earliest date
     let winner: string | null = null
     let maxVotes = 0
     for (const [date, ids] of Object.entries(votes)) {

@@ -6,9 +6,11 @@ import { CampaignHeader } from './components/CampaignHeader'
 import { PlayerRoster } from './components/PlayerRoster'
 import { Calendar } from './components/Calendar'
 import { JoinScreen } from './components/JoinScreen'
-import { MapPage } from './components/MapPage'
+import { BlogPage } from './components/BlogPage'
+import { AdminPanel } from './components/AdminPanel'
 
 const PLAYER_ID_KEY = 'dnd_player_id'
+type View = 'home' | 'blog' | 'admin'
 
 export default function App() {
   useFirestore()
@@ -18,7 +20,7 @@ export default function App() {
     () => localStorage.getItem(PLAYER_ID_KEY)
   )
   const [rosterOpen, setRosterOpen] = useState(false)
-  const [currentView, setCurrentView] = useState<'home' | 'map'>('home')
+  const [currentView, setCurrentView] = useState<View>('home')
 
   useEffect(() => {
     import('./lib/firebase').then(({ db }) => {
@@ -41,7 +43,7 @@ export default function App() {
     })
   }, [])
 
-  const { setActivePlayer } = useCampaignStore()
+  const { setActivePlayer, campaign } = useCampaignStore()
 
   function handleJoined(id: string) {
     localStorage.setItem(PLAYER_ID_KEY, id)
@@ -69,18 +71,30 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-dungeon-900">
       <CampaignHeader
         onMenuClick={() => setRosterOpen(true)}
-        onMapClick={() => setCurrentView((v) => v === 'map' ? 'home' : 'map')}
         currentView={currentView}
+        onNavigate={setCurrentView}
       />
+
+      {/* Pinned announcement */}
+      {campaign?.pinnedAnnouncement && (
+        <div className="bg-amber-900/30 border-b border-amber-700/50 px-4 py-2 text-amber-300 text-sm text-center">
+          📌 {campaign.pinnedAnnouncement}
+        </div>
+      )}
+
+      {/* Session location */}
+      {campaign?.sessionLocation && campaign?.nextSessionDate && (
+        <div className="bg-dungeon-800 border-b border-amber-900/30 px-4 py-1.5 text-stone-400 text-xs text-center">
+          📍 Session location: <span className="text-stone-300 font-medium">{campaign.sessionLocation}</span>
+        </div>
+      )}
+
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {currentView === 'home' ? (
+        {currentView === 'home' && (
           <>
-            {/* Desktop sidebar */}
             <div className="hidden md:block">
               <PlayerRoster />
             </div>
-
-            {/* Mobile drawer */}
             {rosterOpen && (
               <div className="fixed inset-0 z-40 md:hidden flex">
                 <div className="absolute inset-0 bg-black/60" onClick={() => setRosterOpen(false)} />
@@ -89,12 +103,11 @@ export default function App() {
                 </div>
               </div>
             )}
-
             <Calendar />
           </>
-        ) : (
-          <MapPage onBack={() => setCurrentView('home')} />
         )}
+        {currentView === 'blog' && <BlogPage />}
+        {currentView === 'admin' && <AdminPanel />}
       </div>
     </div>
   )

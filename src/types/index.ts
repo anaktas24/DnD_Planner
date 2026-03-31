@@ -12,7 +12,7 @@ export interface Player {
 
 export interface SessionNote {
   id: string
-  date: string // ISO date string
+  date: string
   sessionNumber: number
   summary: string
   location: string
@@ -21,6 +21,8 @@ export interface SessionNote {
 
 export type TimeSlot = 'Morning' | 'Afternoon' | 'Evening'
 
+export type Role = 'admin' | 'editor' | 'player'
+
 export interface Campaign {
   id: string
   name: string
@@ -28,8 +30,20 @@ export interface Campaign {
   sessionCount: number
   nextSessionDate: string | null
   nextSessionTime: TimeSlot | null
+  sessionLocation: string | null
   createdAt: string
-  dateVotes: Record<string, string[]> // date -> playerIds who voted for it
-  timeVotes: Record<TimeSlot, string[]> // slot -> playerIds who voted for it
-  mapImageUrl?: string
+  dateVotes: Record<string, string[]>
+  timeVotes: Record<TimeSlot, string[]>
+  roles: Record<string, Role> // playerId -> role
+  pinnedAnnouncement: string | null
+}
+
+export interface BlogPost {
+  id: string
+  title: string
+  content: string
+  authorId: string
+  authorName: string
+  createdAt: string
+  updatedAt: string
 }
