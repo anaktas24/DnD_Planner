@@ -4,6 +4,9 @@ import { formatDistanceToNow, parseISO, isPast, format } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
 import { ToolsMenu, ProfileButton } from './ToolsMenu'
+import { NotificationBell } from './NotificationBell'
+
+const BLOG_SEEN_KEY = 'dnd_blog_last_seen'
 
 type View = 'home' | 'blog' | 'admin'
 
@@ -15,7 +18,16 @@ interface Props {
 
 export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) {
   const campaign = useCampaignStore((s) => s.campaign)
+  const blogPosts = useCampaignStore((s) => s.blogPosts)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const lastSeen = localStorage.getItem(BLOG_SEEN_KEY) ?? ''
+  const hasUnreadBlog = blogPosts.some((p) => p.createdAt > lastSeen)
+
+  function navigateTo(view: View) {
+    if (view === 'blog') localStorage.setItem(BLOG_SEEN_KEY, new Date().toISOString())
+    onNavigate(view)
+  }
   const [newArcMode, setNewArcMode] = useState(false)
   const [newArcName, setNewArcName] = useState('')
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
@@ -267,20 +279,28 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
           </div>
 
           <button
-            onClick={() => onNavigate(currentView === 'blog' ? 'home' : 'blog')}
-            className={`text-sm font-semibold transition-colors hidden sm:block ${
+            onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
+            className={`text-base font-semibold transition-all hidden sm:block ${
               currentView === 'blog'
                 ? 'text-amber-300 underline underline-offset-2'
+                : hasUnreadBlog
+                ? 'text-amber-200 animate-pulse hover:text-amber-100'
                 : 'text-amber-400 hover:text-amber-300'
             }`}
-            style={{ fontFamily: 'Cinzel, serif' }}
+            style={{
+              fontFamily: 'Cinzel, serif',
+              ...(hasUnreadBlog && currentView !== 'blog'
+                ? { textShadow: '0 0 8px rgba(251,191,36,0.9), 0 0 20px rgba(251,191,36,0.5)' }
+                : {}),
+            }}
           >
             The Story So Far
           </button>
 
           <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-3">
+            <NotificationBell />
             <ProfileButton />
-            <ToolsMenu onNavigate={onNavigate} />
+            <ToolsMenu onNavigate={navigateTo} />
           </div>
         </div>
       </div>

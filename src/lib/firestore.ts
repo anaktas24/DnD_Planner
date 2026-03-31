@@ -172,6 +172,31 @@ export async function upsertNote(note: Omit<SessionNote, 'id'> & { id?: string }
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notes', id), { ...note, id }, { merge: true })
 }
 
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export function subscribeNotifications(cb: (n: import('../types').Notification[]) => void): Unsubscribe {
+  return onSnapshot(
+    query(collection(db, 'campaigns', CAMPAIGN_ID, 'notifications'), orderBy('createdAt', 'desc')),
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as import('../types').Notification)))
+  )
+}
+
+export async function sendNotification(message: string): Promise<void> {
+  const id = crypto.randomUUID()
+  await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', id), {
+    id,
+    message,
+    createdAt: new Date().toISOString(),
+    readBy: [],
+  })
+}
+
+export async function markNotificationRead(notificationId: string, playerId: string): Promise<void> {
+  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', notificationId), {
+    readBy: arrayUnion(playerId),
+  })
+}
+
 // ── Blog ──────────────────────────────────────────────────────────────────────
 
 export function subscribeBlog(cb: (posts: BlogPost[]) => void): Unsubscribe {

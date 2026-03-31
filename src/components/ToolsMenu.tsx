@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield,
+  Trash2, UserX, Copy, Check, Shield, Bell,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { updateCampaign, clearAllAvailability } from '../lib/firestore'
+import { updateCampaign, clearAllAvailability, sendNotification } from '../lib/firestore'
 
 type View = 'home' | 'blog' | 'admin'
 
@@ -18,6 +18,8 @@ interface ToolsMenuProps {
 export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   const [open, setOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [reminderOpen, setReminderOpen] = useState(false)
+  const [reminderText, setReminderText] = useState('')
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -82,6 +84,13 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     setOpen(false)
   }
 
+  async function sendReminder() {
+    if (!reminderText.trim()) return
+    await sendNotification(reminderText.trim())
+    setReminderText('')
+    setReminderOpen(false)
+  }
+
   const items = [
     {
       icon: Play,
@@ -125,6 +134,13 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       onClick: clearAvailability,
       disabled: false,
       danger: true,
+    },
+    {
+      icon: Bell,
+      label: 'Send Reminder',
+      sublabel: 'Push a notification to all players',
+      onClick: () => { setReminderOpen(true); setOpen(false) },
+      disabled: false,
     },
     {
       icon: Shield,
@@ -183,6 +199,35 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
           </div>
         )}
       </div>
+
+      {/* Send reminder modal */}
+      {reminderOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setReminderOpen(false)}>
+          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-sm mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Send Reminder</h3>
+              <button onClick={() => setReminderOpen(false)} className="text-stone-500 hover:text-stone-300">✕</button>
+            </div>
+            <textarea
+              className="input-field resize-none"
+              rows={3}
+              placeholder="e.g. Session this Saturday at 7pm — mark your dates!"
+              value={reminderText}
+              onChange={(e) => setReminderText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendReminder())}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={sendReminder} disabled={!reminderText.trim()} className="btn-primary flex-1 disabled:opacity-50">
+                Send
+              </button>
+              <button onClick={() => setReminderOpen(false)} className="text-stone-500 hover:text-stone-300 px-3 text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Session history modal */}
       {historyOpen && (

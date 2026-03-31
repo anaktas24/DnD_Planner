@@ -44,6 +44,13 @@ export interface Campaign {
   pinnedAnnouncement: string | null
 }
 
+export interface Notification {
+  id: string
+  message: string
+  createdAt: string
+  readBy: string[] // playerIds who have read it
+}
+
 export interface BlogPost {
   id: string
   title: string
