@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Dices, Swords, Menu, ChevronDown, Plus, Clock3 } from 'lucide-react'
+import { Dices, Swords, Menu, ChevronDown, Plus, Clock3, ChevronUp } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isPast, format } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
@@ -46,6 +46,14 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
       : null
 
   const arcHistory = campaign.arcHistory ?? []
+
+  async function moveArc(index: number, direction: -1 | 1) {
+    const updated = [...arcHistory]
+    const swapIndex = index + direction
+    if (swapIndex < 0 || swapIndex >= updated.length) return
+    ;[updated[index], updated[swapIndex]] = [updated[swapIndex], updated[index]]
+    await updateCampaign({ arcHistory: updated })
+  }
 
   async function startNewArc() {
     if (!newArcName.trim()) return
@@ -105,14 +113,28 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
                   <div className="px-3 py-2 border-b border-amber-900/40">
                     <p className="text-stone-600 text-xs uppercase tracking-wider mb-2">Past Arcs</p>
                     <div className="flex flex-col gap-1.5">
-                      {[...arcHistory].reverse().map((arc, i) => (
+                      {arcHistory.map((arc, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <Clock3 className="w-3 h-3 text-stone-600 shrink-0" />
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="text-stone-400 text-sm truncate">{arc.name}</p>
-                            <p className="text-stone-600 text-xs">
-                              {format(parseISO(arc.startedAt), 'MMM d, yyyy')}
-                            </p>
+                            <p className="text-stone-600 text-xs">{format(parseISO(arc.startedAt), 'MMM d, yyyy')}</p>
+                          </div>
+                          <div className="flex flex-col shrink-0">
+                            <button
+                              onClick={() => moveArc(i, -1)}
+                              disabled={i === 0}
+                              className="text-stone-600 hover:text-amber-400 disabled:opacity-20 transition-colors"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => moveArc(i, 1)}
+                              disabled={i === arcHistory.length - 1}
+                              className="text-stone-600 hover:text-amber-400 disabled:opacity-20 transition-colors"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
                           </div>
                         </div>
                       ))}
