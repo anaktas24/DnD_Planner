@@ -55,6 +55,15 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
     await updateCampaign({ arcHistory: updated })
   }
 
+  async function switchToArc(index: number) {
+    const selected = arcHistory[index]
+    const currentArc = { name: campaign!.name, startedAt: campaign!.createdAt ?? new Date().toISOString() }
+    const updated = [...arcHistory]
+    updated[index] = currentArc
+    await updateCampaign({ name: selected.name, arcHistory: updated })
+    setDropdownOpen(false)
+  }
+
   async function startNewArc() {
     if (!newArcName.trim()) return
     const currentArc = { name: campaign!.name, startedAt: campaign!.createdAt ?? new Date().toISOString() }
@@ -117,7 +126,12 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
                         <div key={i} className="flex items-center gap-2">
                           <Clock3 className="w-3 h-3 text-stone-600 shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <p className="text-stone-400 text-sm truncate">{arc.name}</p>
+                            <button
+                              onClick={() => switchToArc(i)}
+                              className="text-stone-400 hover:text-amber-400 text-sm truncate transition-colors text-left w-full"
+                            >
+                              {arc.name}
+                            </button>
                             <p className="text-stone-600 text-xs">{format(parseISO(arc.startedAt), 'MMM d, yyyy')}</p>
                           </div>
                           <div className="flex flex-col shrink-0">
