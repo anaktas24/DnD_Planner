@@ -23,7 +23,6 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
   const [lastSeen, setLastSeen] = useState(() => localStorage.getItem(BLOG_SEEN_KEY) ?? '')
 
   const hasUnreadBlog = blogPosts.length > 0 && (lastSeen === '' || blogPosts.some((p) => p.createdAt > lastSeen))
-  console.log('[blog glow]', { blogPostsCount: blogPosts.length, lastSeen, hasUnreadBlog })
 
   function navigateTo(view: View) {
     if (view === 'blog') {
