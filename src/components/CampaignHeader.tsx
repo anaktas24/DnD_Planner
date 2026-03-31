@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Dices, Swords, Menu, ChevronDown, Plus, Clock3, ChevronUp } from 'lucide-react'
+import { Dices, Swords, Menu, ChevronDown, Plus, Clock3, ChevronUp, Pencil, Trash2, Check, X } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isPast, format } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
@@ -18,6 +18,10 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [newArcMode, setNewArcMode] = useState(false)
   const [newArcName, setNewArcName] = useState('')
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const [editingCurrent, setEditingCurrent] = useState(false)
+  const [editingCurrentName, setEditingCurrentName] = useState('')
   const [, setTick] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -52,6 +56,26 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
     const swapIndex = index + direction
     if (swapIndex < 0 || swapIndex >= updated.length) return
     ;[updated[index], updated[swapIndex]] = [updated[swapIndex], updated[index]]
+    await updateCampaign({ arcHistory: updated })
+  }
+
+  async function saveCurrentEdit() {
+    if (!editingCurrentName.trim()) return
+    await updateCampaign({ name: editingCurrentName.trim() })
+    setEditingCurrent(false)
+  }
+
+  async function saveArcEdit(index: number) {
+    if (!editingName.trim()) return
+    const updated = [...arcHistory]
+    updated[index] = { ...updated[index], name: editingName.trim() }
+    await updateCampaign({ arcHistory: updated })
+    setEditingIndex(null)
+  }
+
+  async function deleteArc(index: number) {
+    if (!confirm('Delete this arc from history?')) return
+    const updated = arcHistory.filter((_, i) => i !== index)
     await updateCampaign({ arcHistory: updated })
   }
 
@@ -112,9 +136,27 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
                 {/* Current arc */}
                 <div className="px-3 py-2 border-b border-amber-900/40">
                   <p className="text-stone-600 text-xs uppercase tracking-wider mb-1">Current Arc</p>
-                  <p className="text-amber-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
-                    {campaign.name}
-                  </p>
+                  {editingCurrent ? (
+                    <div className="flex gap-1 items-center">
+                      <input
+                        className="input-field text-sm py-0.5 flex-1"
+                        value={editingCurrentName}
+                        onChange={(e) => setEditingCurrentName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && saveCurrentEdit()}
+                        autoFocus
+                      />
+                      <button onClick={saveCurrentEdit} className="text-emerald-400 hover:text-emerald-300"><Check className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setEditingCurrent(false)} className="text-stone-500 hover:text-stone-300"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 group">
+                      <p className="text-amber-400 font-semibold text-sm flex-1" style={{ fontFamily: 'Cinzel, serif' }}>{campaign.name}</p>
+                      <button onClick={() => { setEditingCurrentName(campaign!.name); setEditingCurrent(true) }}
+                        className="opacity-0 group-hover:opacity-100 text-stone-600 hover:text-amber-400 transition-all">
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Past arcs */}
@@ -123,33 +165,51 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
                     <p className="text-stone-600 text-xs uppercase tracking-wider mb-2">Past Arcs</p>
                     <div className="flex flex-col gap-1.5">
                       {arcHistory.map((arc, i) => (
-                        <div key={i} className="flex items-center gap-2">
+                        <div key={i} className="flex items-center gap-1 group">
                           <Clock3 className="w-3 h-3 text-stone-600 shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <button
-                              onClick={() => switchToArc(i)}
-                              className="text-stone-400 hover:text-amber-400 text-sm truncate transition-colors text-left w-full"
-                            >
-                              {arc.name}
-                            </button>
+                            {editingIndex === i ? (
+                              <div className="flex gap-1 items-center">
+                                <input
+                                  className="input-field text-xs py-0.5 flex-1"
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && saveArcEdit(i)}
+                                  autoFocus
+                                />
+                                <button onClick={() => saveArcEdit(i)} className="text-emerald-400 hover:text-emerald-300"><Check className="w-3 h-3" /></button>
+                                <button onClick={() => setEditingIndex(null)} className="text-stone-500 hover:text-stone-300"><X className="w-3 h-3" /></button>
+                              </div>
+                            ) : (
+                              <button onClick={() => switchToArc(i)}
+                                className="text-stone-400 hover:text-amber-400 text-sm truncate transition-colors text-left w-full">
+                                {arc.name}
+                              </button>
+                            )}
                             <p className="text-stone-600 text-xs">{format(parseISO(arc.startedAt), 'MMM d, yyyy')}</p>
                           </div>
-                          <div className="flex flex-col shrink-0">
-                            <button
-                              onClick={() => moveArc(i, -1)}
-                              disabled={i === 0}
-                              className="text-stone-600 hover:text-amber-400 disabled:opacity-20 transition-colors"
-                            >
-                              <ChevronUp className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => moveArc(i, 1)}
-                              disabled={i === arcHistory.length - 1}
-                              className="text-stone-600 hover:text-amber-400 disabled:opacity-20 transition-colors"
-                            >
-                              <ChevronDown className="w-3 h-3" />
-                            </button>
-                          </div>
+                          {editingIndex !== i && (
+                            <>
+                              <button onClick={() => { setEditingName(arc.name); setEditingIndex(i) }}
+                                className="opacity-0 group-hover:opacity-100 text-stone-600 hover:text-amber-400 transition-all shrink-0">
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                              <button onClick={() => deleteArc(i)}
+                                className="opacity-0 group-hover:opacity-100 text-stone-600 hover:text-red-400 transition-all shrink-0">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                              <div className="flex flex-col shrink-0">
+                                <button onClick={() => moveArc(i, -1)} disabled={i === 0}
+                                  className="text-stone-600 hover:text-amber-400 disabled:opacity-20 transition-colors">
+                                  <ChevronUp className="w-3 h-3" />
+                                </button>
+                                <button onClick={() => moveArc(i, 1)} disabled={i === arcHistory.length - 1}
+                                  className="text-stone-600 hover:text-amber-400 disabled:opacity-20 transition-colors">
+                                  <ChevronDown className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>
