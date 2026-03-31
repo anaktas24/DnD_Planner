@@ -20,12 +20,16 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
   const campaign = useCampaignStore((s) => s.campaign)
   const blogPosts = useCampaignStore((s) => s.blogPosts)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [lastSeen, setLastSeen] = useState(() => localStorage.getItem(BLOG_SEEN_KEY) ?? '')
 
-  const lastSeen = localStorage.getItem(BLOG_SEEN_KEY) ?? ''
-  const hasUnreadBlog = blogPosts.some((p) => p.createdAt > lastSeen)
+  const hasUnreadBlog = blogPosts.length > 0 && (lastSeen === '' || blogPosts.some((p) => p.createdAt > lastSeen))
 
   function navigateTo(view: View) {
-    if (view === 'blog') localStorage.setItem(BLOG_SEEN_KEY, new Date().toISOString())
+    if (view === 'blog') {
+      const now = new Date().toISOString()
+      localStorage.setItem(BLOG_SEEN_KEY, now)
+      setLastSeen(now)
+    }
     onNavigate(view)
   }
   const [newArcMode, setNewArcMode] = useState(false)
