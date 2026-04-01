@@ -276,8 +276,16 @@ export function ProfileButton() {
     'Half-Orc','Tiefling','Dragonborn','Aasimar','Tabaxi','Kenku','Other',
   ]
   const COLOR_PRESETS = [
-    '#FF3B30','#FF9500','#FFCC00','#34C759','#30B0C7',
-    '#007AFF','#5856D6','#AF52DE','#FF2D55','#FF6B35',
+    '#FF8080','#CC1A00',  // light red, dark red
+    '#FFBB66','#CC5200',  // light orange, dark orange
+    '#FFE566','#997700',  // light yellow, dark yellow
+    '#66DD88','#1A7A3A',  // light green, dark green
+    '#66D9E8','#0A6E7A',  // light teal, dark teal
+    '#66AAFF','#003DB3',  // light blue, dark blue
+    '#9B99E8','#2E2B99',  // light indigo, dark indigo
+    '#D499EE','#7A1FA0',  // light purple, dark purple
+    '#FF99BB','#CC003D',  // light pink, dark pink
+    '#FFAA80','#CC3300',  // light coral, dark coral
   ]
 
   const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0] })
