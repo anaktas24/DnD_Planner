@@ -147,16 +147,13 @@ export async function voteForTimeSlot(playerId: string, slot: string): Promise<v
   const ref = doc(db, 'campaigns', CAMPAIGN_ID)
   const snap = await getDoc(ref)
   const current: Record<string, string[]> = snap.data()?.timeVotes ?? {}
-  const slots = ['Morning', 'Afternoon', 'Evening']
 
-  const updated: Record<string, string[]> = {}
-  for (const s of slots) {
-    updated[s] = (current[s] ?? []).filter((id) => id !== playerId)
-  }
   const alreadyVotedHere = (current[slot] ?? []).includes(playerId)
-  if (!alreadyVotedHere) updated[slot].push(playerId)
+  const updated = alreadyVotedHere
+    ? (current[slot] ?? []).filter((id) => id !== playerId)
+    : [...(current[slot] ?? []), playerId]
 
-  await updateDoc(ref, { timeVotes: updated })
+  await updateDoc(ref, { [`timeVotes.${slot}`]: updated })
 }
 
 // ── Session Notes ─────────────────────────────────────────────────────────────

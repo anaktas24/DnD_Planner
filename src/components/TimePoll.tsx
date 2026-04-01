@@ -29,8 +29,8 @@ export function TimePoll() {
     Evening: campaign?.timeVotes?.Evening ?? [],
   }
 
-  const totalVotesCast = SLOTS.reduce((sum, s) => sum + timeVotes[s].length, 0)
-  const allVoted = players.length > 0 && totalVotesCast >= players.length
+  const playersWhoVoted = new Set(SLOTS.flatMap((s) => timeVotes[s]))
+  const allVoted = players.length > 0 && players.every((p) => playersWhoVoted.has(p.id))
 
   const winner: TimeSlot | null = allVoted
     ? SLOTS.reduce<TimeSlot>(
@@ -48,7 +48,7 @@ export function TimePoll() {
   if (!nextDate) return null
   if (nextTime) return null
 
-  const myVote = SLOTS.find((s) => timeVotes[s].includes(myId ?? ''))
+  const myVotes = new Set(SLOTS.filter((s) => timeVotes[s].includes(myId ?? '')))
 
   async function vote(slot: TimeSlot) {
     if (!myId) return
@@ -71,7 +71,7 @@ export function TimePoll() {
         <div className="flex gap-2">
           {SLOTS.map((slot) => {
             const slotVoters = timeVotes[slot]
-            const myVoteIsHere = myVote === slot
+            const myVoteIsHere = myVotes.has(slot)
 
             return (
               <button

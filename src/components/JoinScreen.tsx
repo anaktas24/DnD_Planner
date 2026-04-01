@@ -14,8 +14,8 @@ const RACE_OPTIONS = [
 ]
 
 const COLOR_PRESETS = [
-  '#e63946','#f4a261','#2a9d8f','#457b9d','#a8dadc',
-  '#e9c46a','#9b5de5','#f15bb5','#00bbf9','#00f5d4',
+  '#FF3B30','#FF9500','#FFCC00','#34C759','#30B0C7',
+  '#007AFF','#5856D6','#AF52DE','#FF2D55','#FF6B35',
 ]
 
 interface Props {
