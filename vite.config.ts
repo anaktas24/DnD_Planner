@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icons/*.png'],
       manifest: {
-        name: 'Quest Board — D&D Planner',
-        short_name: 'Quest Board',
+        name: 'DnD Planner',
+        short_name: 'DnD Planner',
         description: 'D&D session planner for your adventuring party',
         theme_color: '#1c1008',
         background_color: '#1c1008',

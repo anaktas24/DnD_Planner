@@ -46,7 +46,7 @@ export default function App() {
     return () => clearTimeout(timeout)
   }, [])
 
-  const { setActivePlayer, campaign } = useCampaignStore()
+  const { setActivePlayer, campaign, players } = useCampaignStore()
 
   function handleJoined(id: string) {
     localStorage.setItem(PLAYER_ID_KEY, id)
@@ -58,10 +58,33 @@ export default function App() {
     if (playerId) setActivePlayer(playerId)
   }, [playerId, setActivePlayer])
 
+  // If this player was kicked, clear their session and show JoinScreen
+  useEffect(() => {
+    if (!playerId || players.length === 0) return
+    const stillExists = players.some((p) => p.id === playerId)
+    if (!stillExists) {
+      localStorage.removeItem(PLAYER_ID_KEY)
+      setPlayerId(null)
+    }
+  }, [players, playerId])
+
   if (!ready) {
     return (
-      <div className="min-h-screen bg-dungeon-900 flex items-center justify-center">
-        <p className="text-stone-600 text-sm animate-pulse">Loading...</p>
+      <div className="min-h-screen bg-dungeon-900 flex flex-col items-center justify-center gap-6">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/icons/icon-512.png" alt="Quest Board" className="w-24 h-24 rounded-2xl shadow-2xl" />
+          <h1 className="text-3xl font-bold text-amber-400 tracking-wide" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
+            DnD Planner
+          </h1>
+          <p className="text-stone-600 text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
+            Session Planner
+          </p>
+        </div>
+        <div className="flex gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
       </div>
     )
   }
