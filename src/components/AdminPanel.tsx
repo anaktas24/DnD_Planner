@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown } from 'lucide-react'
+import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign } from '../lib/firestore'
 import type { Role } from '../types'
@@ -15,6 +15,7 @@ export function AdminPanel() {
 
   const [announcement, setAnnouncement] = useState(campaign?.pinnedAnnouncement ?? '')
   const [location, setLocation] = useState(campaign?.sessionLocation ?? '')
+  const [webhook, setWebhook] = useState(campaign?.discordWebhookUrl ?? '')
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState('')
 
@@ -46,6 +47,10 @@ export function AdminPanel() {
 
   async function saveLocation() {
     await updateCampaign({ sessionLocation: location.trim() || null })
+  }
+
+  async function saveWebhook() {
+    await updateCampaign({ discordWebhookUrl: webhook.trim() || undefined })
   }
 
   const hasAdmin = Object.values(roles).includes('admin')
@@ -115,6 +120,22 @@ export function AdminPanel() {
                 onChange={(e) => setLocation(e.target.value)}
               />
               <button onClick={saveLocation} className="btn-primary text-xs px-3 py-1.5 self-start">Save</button>
+            </section>
+
+            {/* Discord Webhook */}
+            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Webhook className="w-4 h-4 text-amber-500" />
+                <h3 className="text-amber-400 font-semibold text-sm">Discord Webhook</h3>
+              </div>
+              <p className="text-stone-500 text-xs">Auto-posts to Discord when the date or time poll resolves. Get your webhook URL from Discord: channel settings → Integrations → Webhooks.</p>
+              <input
+                className="input-field text-xs"
+                placeholder="https://discord.com/api/webhooks/..."
+                value={webhook}
+                onChange={(e) => setWebhook(e.target.value)}
+              />
+              <button onClick={saveWebhook} className="btn-primary text-xs px-3 py-1.5 self-start">Save</button>
             </section>
 
             {/* Player management */}

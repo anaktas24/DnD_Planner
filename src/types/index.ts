@@ -42,6 +42,9 @@ export interface Campaign {
   timeVotes: Record<TimeSlot, string[]>
   roles: Record<string, Role> // playerId -> role
   pinnedAnnouncement: string | null
+  discordWebhookUrl?: string
+  discordDateNotified?: boolean
+  discordTimeNotified?: boolean
 }
 
 export interface Notification {

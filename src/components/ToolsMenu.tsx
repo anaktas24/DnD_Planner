@@ -46,7 +46,12 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   }
 
   async function resetSession() {
-    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: { Morning: [], Afternoon: [], Evening: [] } })
+    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: { Morning: [], Afternoon: [], Evening: [] }, discordDateNotified: false, discordTimeNotified: false })
+    setOpen(false)
+  }
+
+  async function resetTimeOnly() {
+    await updateCampaign({ nextSessionTime: null, timeVotes: { Morning: [], Afternoon: [], Evening: [] }, discordTimeNotified: false })
     setOpen(false)
   }
 
@@ -102,9 +107,16 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     {
       icon: XCircle,
       label: 'Reset session date',
-      sublabel: 'Clear the countdown',
+      sublabel: 'Clear date + time',
       onClick: resetSession,
       disabled: !campaign?.nextSessionDate,
+    },
+    {
+      icon: XCircle,
+      label: 'Reset time only',
+      sublabel: 'Reopen time voting, keep date',
+      onClick: resetTimeOnly,
+      disabled: !campaign?.nextSessionTime,
     },
     {
       icon: PlusCircle,

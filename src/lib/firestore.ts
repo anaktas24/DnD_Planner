@@ -12,6 +12,7 @@ import {
   writeBatch,
   orderBy,
   query,
+  runTransaction,
   Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -211,4 +212,22 @@ export async function upsertBlogPost(post: Omit<BlogPost, 'id'> & { id?: string 
 
 export async function deleteBlogPost(postId: string): Promise<void> {
   await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'blog', postId))
+}
+
+// ── Discord Webhook ───────────────────────────────────────────────────────────
+
+// Uses a Firestore transaction to ensure only one client sends the webhook
+// even if multiple players have the app open at the same time.
+export async function claimWebhookSend(field: 'discordDateNotified' | 'discordTimeNotified'): Promise<boolean> {
+  const ref = doc(db, 'campaigns', CAMPAIGN_ID)
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref)
+      if (snap.data()?.[field] === true) throw new Error('already sent')
+      tx.update(ref, { [field]: true })
+    })
+    return true
+  } catch {
+    return false
+  }
 }
