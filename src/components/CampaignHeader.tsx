@@ -270,14 +270,14 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
         {/* Right */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
           <div className="hidden sm:flex items-center gap-1.5 text-stone-300 text-sm">
-            <Swords className="w-4 h-4 text-amber-600" />
-            <span>Session <span className="text-amber-400 font-bold text-base">#{campaign.sessionCount}</span></span>
+            <Swords className="w-6 h-6 text-amber-600" />
+            <span>Session <span className="text-amber-400 font-bold text-2xl">#{campaign.sessionCount}</span></span>
             {countdown && (
               <>
                 <span className="text-stone-600">·</span>
-                <span className="text-amber-400 font-semibold text-xs">{countdown}</span>
+                <span className="text-amber-400 font-semibold text-xl">{countdown}</span>
                 {campaign.nextSessionTime && (
-                  <span className="text-amber-600 text-xs">· {campaign.nextSessionTime}</span>
+                  <span className="text-amber-600 text-xl">· {campaign.nextSessionTime}</span>
                 )}
               </>
             )}
