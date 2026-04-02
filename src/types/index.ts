@@ -19,8 +19,6 @@ export interface SessionNote {
   nextLocation: string
 }
 
-export type TimeSlot = 'Morning' | 'Afternoon' | 'Evening'
-
 export type Role = 'admin' | 'editor' | 'player'
 
 export interface ArcEntry {
@@ -35,16 +33,17 @@ export interface Campaign {
   arcHistory: ArcEntry[] // past arc names, newest last
   sessionCount: number
   nextSessionDate: string | null
-  nextSessionTime: TimeSlot | null
+  nextSessionTime: string | null
   sessionLocation: string | null
   createdAt: string
   dateVotes: Record<string, string[]>
-  timeVotes: Record<TimeSlot, string[]>
+  timeVotes: Record<string, string[]>
   roles: Record<string, Role> // playerId -> role
   pinnedAnnouncement: string | null
   discordWebhookUrl?: string
   discordDateNotified?: boolean
   discordTimeNotified?: boolean
+
 }
 
 export interface Notification {

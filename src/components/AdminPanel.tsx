@@ -53,6 +53,29 @@ export function AdminPanel() {
     await updateCampaign({ discordWebhookUrl: webhook.trim() || undefined })
   }
 
+  async function testWebhook() {
+    const url = webhook.trim() || campaign?.discordWebhookUrl
+    if (!url) return
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          embeds: [{
+            title: '✅ Webhook connected!',
+            description: `**${campaign?.name}** is successfully linked to Discord.`,
+            color: 0xf59e0b,
+            footer: { text: 'DnD Planner — webhook test' },
+          }],
+        }),
+      })
+      if (res.ok) alert('Test message sent to Discord!')
+      else alert(`Discord returned error: ${res.status}`)
+    } catch (e) {
+      alert(`Failed to reach Discord: ${e}`)
+    }
+  }
+
   const hasAdmin = Object.values(roles).includes('admin')
 
   return (
@@ -135,7 +158,10 @@ export function AdminPanel() {
                 value={webhook}
                 onChange={(e) => setWebhook(e.target.value)}
               />
-              <button onClick={saveWebhook} className="btn-primary text-xs px-3 py-1.5 self-start">Save</button>
+              <div className="flex gap-2">
+                <button onClick={saveWebhook} className="btn-primary text-xs px-3 py-1.5">Save</button>
+                <button onClick={testWebhook} className="text-xs px-3 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">Test</button>
+              </div>
             </section>
 
             {/* Player management */}

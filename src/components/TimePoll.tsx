@@ -1,58 +1,62 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Clock } from 'lucide-react'
+import { Clock, Plus, X } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { voteForTimeSlot, updateCampaign } from '../lib/firestore'
-import type { TimeSlot } from '../types'
-
-const SLOTS: TimeSlot[] = ['Morning', 'Afternoon', 'Evening']
-const SLOT_HOURS: Record<TimeSlot, string> = {
-  Morning: '10:00',
-  Afternoon: '14:00',
-  Evening: '19:00',
-}
+import { updateCampaign } from '../lib/firestore'
+import { doc, updateDoc } from 'firebase/firestore'
+import { db } from '../lib/firebase'
 
 const PLAYER_ID_KEY = 'dnd_player_id'
+const CAMPAIGN_ID = 'main'
 
 export function TimePoll() {
   const { campaign, players } = useCampaignStore()
   const myId = localStorage.getItem(PLAYER_ID_KEY)
-  const me = players.find((p) => p.id === myId)
+  const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
+  const isAdmin = myRole === 'admin'
+
+  const [newTime, setNewTime] = useState('')
 
   const nextDate = campaign?.nextSessionDate
   const nextTime = campaign?.nextSessionTime
-  const hasMarkedDates = (me?.availability.length ?? 0) > 0
+  const timeVotes: Record<string, string[]> = campaign?.timeVotes ?? {}
+  const proposedTimes = Object.keys(timeVotes)
 
-  const timeVotes: Record<TimeSlot, string[]> = {
-    Morning: campaign?.timeVotes?.Morning ?? [],
-    Afternoon: campaign?.timeVotes?.Afternoon ?? [],
-    Evening: campaign?.timeVotes?.Evening ?? [],
-  }
-
-  const playersWhoVoted = new Set(SLOTS.flatMap((s) => timeVotes[s]))
+  const playersWhoVoted = new Set(Object.values(timeVotes).flat())
   const allVoted = players.length > 0 && players.every((p) => playersWhoVoted.has(p.id))
 
-  const winner: TimeSlot | null = allVoted
-    ? SLOTS.reduce<TimeSlot>(
-        (best, slot) => timeVotes[slot].length > timeVotes[best].length ? slot : best,
-        'Evening'
-      )
-    : null
-
   useEffect(() => {
+    if (!allVoted || proposedTimes.length === 0) return
+    const winner = proposedTimes.reduce((best, t) =>
+      (timeVotes[t]?.length ?? 0) > (timeVotes[best]?.length ?? 0) ? t : best
+    )
     if (winner && nextTime !== winner) {
       updateCampaign({ nextSessionTime: winner })
     }
-  }, [winner, nextTime])
+  }, [allVoted])
 
-  if (!nextDate) return null
-  if (nextTime) return null
+  if (!nextDate || nextTime) return null
+  if (proposedTimes.length === 0 && !isAdmin) return null
 
-  const myVotes = new Set(SLOTS.filter((s) => timeVotes[s].includes(myId ?? '')))
+  async function addTime() {
+    if (!newTime) return
+    const updated = { ...timeVotes, [newTime]: timeVotes[newTime] ?? [] }
+    await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), { timeVotes: updated })
+    setNewTime('')
+  }
 
-  async function vote(slot: TimeSlot) {
+  async function removeTime(t: string) {
+    const updated = { ...timeVotes }
+    delete updated[t]
+    await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), { timeVotes: updated })
+  }
+
+  async function vote(t: string) {
     if (!myId) return
-    await voteForTimeSlot(myId, slot)
+    const current = timeVotes[t] ?? []
+    const already = current.includes(myId)
+    const updated = already ? current.filter((id) => id !== myId) : [...current, myId]
+    await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), { [`timeVotes.${t}`]: updated })
   }
 
   return (
@@ -60,41 +64,62 @@ export function TimePoll() {
       <div className="flex items-center gap-2 mb-1">
         <Clock className="w-4 h-4 text-amber-500" />
         <p className="text-amber-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
-          What time works on {format(parseISO(nextDate), 'MMM d')}?
+          What time on {format(parseISO(nextDate), 'MMM d')}?
         </p>
       </div>
-      <p className="text-stone-600 text-xs mb-3">Vote for your preferred time slot</p>
 
-      {!hasMarkedDates ? (
-        <p className="text-stone-500 text-sm italic">Mark your availability first before voting.</p>
+      {isAdmin && (
+        <div className="flex items-center gap-2 mt-3 mb-3">
+          <input
+            type="time"
+            value={newTime}
+            onChange={(e) => setNewTime(e.target.value)}
+            className="input-field w-32 text-sm py-1"
+          />
+          <button
+            onClick={addTime}
+            disabled={!newTime || !!timeVotes[newTime]}
+            className="flex items-center gap-1 text-xs px-2 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors disabled:opacity-40"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add option
+          </button>
+        </div>
+      )}
+
+      {proposedTimes.length === 0 ? (
+        <p className="text-stone-500 text-sm italic">No time options yet — add some above.</p>
       ) : (
-        <div className="flex gap-2">
-          {SLOTS.map((slot) => {
-            const slotVoters = timeVotes[slot]
-            const myVoteIsHere = myVotes.has(slot)
-
+        <div className="flex flex-wrap gap-2">
+          {proposedTimes.sort().map((t) => {
+            const voters = timeVotes[t] ?? []
+            const myVoteIsHere = voters.includes(myId ?? '')
             return (
-              <button
-                key={slot}
-                onClick={() => vote(slot)}
-                className={`flex-1 flex flex-col items-center rounded-lg px-2 py-2.5 border transition-colors text-sm ${
-                  myVoteIsHere
-                    ? 'bg-emerald-800/50 border-emerald-500 text-emerald-300'
-                    : 'bg-dungeon-900 border-amber-900/40 text-stone-300 hover:border-amber-600'
-                }`}
-              >
-                <span className="font-medium">{slot}</span>
-                <span className="text-stone-500 text-xs">{SLOT_HOURS[slot]}</span>
-                <div className="flex gap-0.5 mt-1.5 flex-wrap justify-center">
-                  {slotVoters.map((pid) => {
+              <div key={t} className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => vote(t)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${
+                      myVoteIsHere
+                        ? 'bg-emerald-800/50 border-emerald-500 text-emerald-300'
+                        : 'bg-dungeon-900 border-amber-900/40 text-stone-300 hover:border-amber-600'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                  {isAdmin && (
+                    <button onClick={() => removeTime(t)} className="text-stone-600 hover:text-red-400 transition-colors">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-0.5 flex-wrap justify-center">
+                  {voters.map((pid) => {
                     const p = players.find((pl) => pl.id === pid)
-                    return p ? (
-                      <span key={pid} className="w-2 h-2 rounded-full" style={{ background: p.color }} title={p.characterName} />
-                    ) : null
+                    return p ? <span key={pid} className="w-2 h-2 rounded-full" style={{ background: p.color }} title={p.characterName} /> : null
                   })}
                 </div>
-                <span className="text-stone-600 text-xs mt-0.5">{slotVoters.length}/{players.length}</span>
-              </button>
+                <span className="text-stone-600 text-xs">{voters.length}/{players.length}</span>
+              </div>
             )
           })}
         </div>

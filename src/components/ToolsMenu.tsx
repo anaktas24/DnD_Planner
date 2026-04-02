@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell,
+  Trash2, UserX, Copy, Check, Shield, Bell, Send,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearAllAvailability, sendNotification } from '../lib/firestore'
@@ -46,12 +46,12 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   }
 
   async function resetSession() {
-    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: { Morning: [], Afternoon: [], Evening: [] }, discordDateNotified: false, discordTimeNotified: false })
+    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: {}, discordDateNotified: false, discordTimeNotified: false })
     setOpen(false)
   }
 
   async function resetTimeOnly() {
-    await updateCampaign({ nextSessionTime: null, timeVotes: { Morning: [], Afternoon: [], Evening: [] }, discordTimeNotified: false })
+    await updateCampaign({ nextSessionTime: null, timeVotes: {}, discordTimeNotified: false })
     setOpen(false)
   }
 
@@ -86,6 +86,31 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     navigator.clipboard.writeText(lines)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    setOpen(false)
+  }
+
+  async function postToDiscord() {
+    const url = campaign?.discordWebhookUrl
+    if (!url) { alert('No Discord webhook configured in Admin Panel.'); return }
+    const dateStr = campaign?.nextSessionDate ? format(parseISO(campaign.nextSessionDate), 'EEEE, MMMM d') : 'TBD'
+    const timeStr = campaign?.nextSessionTime ?? null
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        embeds: [{
+          title: '⚔️ Session confirmed!',
+          description: `**${campaign?.name}** — Session #${campaign?.sessionCount}`,
+          color: 0xf59e0b,
+          fields: [
+            { name: '🗓️ Date', value: dateStr, inline: true },
+            ...(timeStr ? [{ name: '🕐 Time', value: timeStr, inline: true }] : []),
+            ...(campaign?.sessionLocation ? [{ name: '📍 Location', value: campaign.sessionLocation, inline: false }] : []),
+          ],
+          footer: { text: 'See you there, adventurers!' },
+        }],
+      }),
+    }).then(() => { alert('Posted to Discord!') }).catch(() => alert('Failed to reach Discord.'))
     setOpen(false)
   }
 
@@ -146,6 +171,13 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       onClick: clearAvailability,
       disabled: false,
       danger: true,
+    },
+    {
+      icon: Send,
+      label: 'Post to Discord',
+      sublabel: 'Send current session info to Discord',
+      onClick: postToDiscord,
+      disabled: !campaign?.discordWebhookUrl,
     },
     {
       icon: Bell,

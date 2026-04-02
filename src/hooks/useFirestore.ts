@@ -4,11 +4,6 @@ import { useCampaignStore } from '../store/useCampaignStore'
 import { format, parseISO } from 'date-fns'
 import type { Campaign } from '../types'
 
-const SLOT_HOURS: Record<string, string> = {
-  Morning: '10:00',
-  Afternoon: '14:00',
-  Evening: '19:00',
-}
 
 async function sendDiscordWebhook(url: string, payload: object) {
   try {
@@ -70,7 +65,7 @@ export function useFirestore() {
                 color: 0x22c55e,
                 fields: [
                   { name: '🗓️ Date', value: dateStr, inline: true },
-                  { name: '🕐 Time', value: `${timeStr} (${SLOT_HOURS[timeStr]})`, inline: true },
+                  { name: '🕐 Time', value: timeStr, inline: true },
                   ...(campaign.sessionLocation ? [{ name: '📍 Location', value: campaign.sessionLocation, inline: false }] : []),
                 ],
                 footer: { text: 'See you there, adventurers!' },
