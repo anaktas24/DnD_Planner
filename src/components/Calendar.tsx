@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   startOfMonth, endOfMonth, eachDayOfInterval, getDay,
   format, addMonths, subMonths, isSameMonth, isToday,
@@ -16,6 +16,21 @@ export function Calendar() {
 
   const { players, activePlayerId, allFreeDates, campaign } = useCampaignStore()
   const confirmedDate = campaign?.nextSessionDate ?? null
+
+  // Swipe gesture handling
+  const touchStartX = useRef<number | null>(null)
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) setMonth((m) => addMonths(m, 1))
+      else setMonth((m) => subMonths(m, 1))
+    }
+    touchStartX.current = null
+  }
 
   const days = useMemo(() => {
     const start = startOfMonth(month)
@@ -86,7 +101,7 @@ export function Calendar() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-1 flex-1">
+      <div className="grid grid-cols-7 gap-1 flex-1" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {/* Padding cells */}
         {Array.from({ length: startPad }).map((_, i) => (
           <div key={`pad-${i}`} />

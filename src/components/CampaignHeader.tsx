@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Dices, Swords, Menu, ChevronDown, Plus, Clock3, ChevronUp, Pencil, Trash2, Check, X, ScrollText } from 'lucide-react'
+import { Dices, Swords, Users, ChevronDown, Plus, Clock3, ChevronUp, Pencil, Trash2, Check, X, ScrollText } from 'lucide-react'
 import { parseISO, isPast, format, differenceInDays } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
@@ -19,6 +19,8 @@ interface Props {
 export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) {
   const campaign = useCampaignStore((s) => s.campaign)
   const blogPosts = useCampaignStore((s) => s.blogPosts)
+  const myId = useCampaignStore((s) => s.activePlayerId)
+  const isAdmin = myId ? (campaign?.roles?.[myId] ?? 'player') === 'admin' : false
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [lastSeen, setLastSeen] = useState(() => localStorage.getItem(BLOG_SEEN_KEY) ?? '')
 
@@ -117,11 +119,9 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
       {/* Main row */}
       <div className="flex items-center justify-between gap-2">
 
-        {/* Left */}
+        {/* Left — dice (mobile: opens dropdown, desktop: home) + campaign name (desktop only) */}
         <div className="flex items-center gap-2 min-w-0">
-          <button onClick={onMenuClick} className="md:hidden text-amber-600 hover:text-amber-400 transition-colors shrink-0">
-            <Menu className="w-6 h-6" />
-          </button>
+          {/* Dice — always home */}
           <button
             onClick={() => onNavigate('home')}
             className="text-amber-500 hover:text-amber-300 transition-colors shrink-0"
@@ -134,15 +134,15 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
           <div className="relative min-w-0" ref={dropdownRef}>
             <button
               onClick={() => { setDropdownOpen((o) => !o); setNewArcMode(false) }}
-              className="flex items-center gap-1.5 group min-w-0"
+              className="flex items-center gap-1 group min-w-0"
             >
               <h1
-                className="text-base md:text-xl font-bold text-amber-400 group-hover:text-amber-300 truncate max-w-[130px] sm:max-w-[220px] md:max-w-none"
+                className="text-xs md:text-xl font-bold text-amber-400 group-hover:text-amber-300 truncate max-w-[80px] sm:max-w-[220px] md:max-w-none"
                 style={{ fontFamily: 'Cinzel Decorative, serif' }}
               >
                 {campaign.name}
               </h1>
-              <ChevronDown className={`w-4 h-4 text-amber-600 shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3 h-3 md:w-4 md:h-4 text-amber-600 shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {dropdownOpen && (
@@ -282,10 +282,17 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
             )}
           </div>
 
-          <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-3">
+          <div className="flex items-center gap-1 md:border-l md:border-amber-900 md:pl-3">
+            <button
+              onClick={onMenuClick}
+              className="p-2 rounded-lg text-stone-500 hover:text-amber-400 transition-colors md:hidden"
+              title="Adventurers"
+            >
+              <Users className="w-5 h-5" />
+            </button>
             <button
               onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
-              className={`relative p-2 rounded-lg transition-colors hidden sm:block ${
+              className={`relative p-2 rounded-lg transition-colors ${
                 currentView === 'blog' ? 'text-amber-300' : hasUnreadBlog ? 'text-amber-200 hover:text-amber-100' : 'text-stone-500 hover:text-amber-400'
               }`}
               title="The Story So Far"
@@ -296,38 +303,21 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
                 <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
               )}
             </button>
-            <SessionMenu />
-            <ToolsMenu onNavigate={navigateTo} />
+            {isAdmin && <SessionMenu />}
+            {isAdmin && <ToolsMenu onNavigate={navigateTo} />}
             <NotificationBell />
             <ProfileButton />
           </div>
         </div>
       </div>
-
-      {/* Mobile second row */}
-      <div className="flex sm:hidden items-center justify-between mt-1.5 pt-1.5 border-t border-amber-900/30">
-        <div className="flex items-center gap-3 text-stone-400 text-xs">
-          <div className="flex items-center gap-1">
-            <Swords className="w-3.5 h-3.5 text-amber-600" />
-            <span>Session <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span></span>
-          </div>
-          {countdown && (
-            <span className="text-amber-400 font-bold">{countdown}</span>
-          )}
+      {/* Mobile second row — session info centered */}
+      <div className="flex sm:hidden justify-center mt-1.5 pt-1.5 border-t border-amber-900/30">
+        <div className="flex items-center gap-2 text-xs text-stone-400">
+          <Swords className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <span>Session <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span></span>
+          {countdown && <span className="text-amber-400 font-bold">{countdown}</span>}
+          {campaign.nextSessionTime && countdown && <span className="text-amber-600">· {campaign.nextSessionTime}</span>}
         </div>
-        <button
-          onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
-          className={`relative p-1 rounded-lg transition-colors ${
-            currentView === 'blog' ? 'text-amber-300' : hasUnreadBlog ? 'text-amber-200' : 'text-stone-500'
-          }`}
-          title="The Story So Far"
-          style={hasUnreadBlog && currentView !== 'blog' ? { filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.8))' } : {}}
-        >
-          <ScrollText className="w-4 h-4" />
-          {hasUnreadBlog && currentView !== 'blog' && (
-            <span className="absolute top-0 right-0 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-          )}
-        </button>
       </div>
     </header>
   )
