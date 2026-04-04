@@ -149,6 +149,22 @@ export async function clearAllAvailability(): Promise<void> {
   await batch.commit()
 }
 
+export async function clearPastAvailability(): Promise<void> {
+  const today = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
+  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
+  const batch = writeBatch(db)
+  snap.docs.forEach((docSnap) => {
+    const data = docSnap.data()
+    const filter = (dates: string[]) => (dates ?? []).filter((d) => d >= today)
+    batch.update(doc(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
+      availability: filter(data.availability),
+      confirmedDates: filter(data.confirmedDates),
+      declinedDates: filter(data.declinedDates),
+    })
+  })
+  await batch.commit()
+}
+
 // ── Date Poll ─────────────────────────────────────────────────────────────────
 
 export async function voteForDate(playerId: string, date: string, allDates: string[]): Promise<void> {

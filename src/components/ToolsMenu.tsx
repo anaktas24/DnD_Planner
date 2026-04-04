@@ -5,7 +5,7 @@ import {
   Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { updateCampaign, clearAllAvailability, sendNotification } from '../lib/firestore'
+import { updateCampaign, clearAllAvailability, clearPastAvailability, sendNotification } from '../lib/firestore'
 import { signOutUser } from '../lib/firebase'
 
 type View = 'home' | 'blog' | 'admin'
@@ -60,7 +60,7 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   }
 
   async function sessionComplete() {
-    if (!confirm('Mark session as complete? This will bump the session count, clear all availability, and reset the date and votes.')) return
+    if (!confirm('Mark session as complete? This will bump the session count and reset the date, time and votes.')) return
     await updateCampaign({
       sessionCount: (campaign?.sessionCount ?? 0) + 1,
       nextSessionDate: null,
@@ -71,14 +71,20 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       discordTimeNotified: false,
       sessionLocation: null,
     })
-    await clearAllAvailability()
+    setOpen(false)
+  }
+
+  async function clearPastDates() {
+    if (!confirm('Clear all past dates from everyone\'s availability? Future dates stay.')) return
+    await clearPastAvailability()
+    await updateCampaign({ dateVotes: {} })
     setOpen(false)
   }
 
   async function clearAvailability() {
-    if (!confirm('Clear all players\' availability for a fresh month?')) return
+    if (!confirm('Clear ALL availability for everyone? This cannot be undone.')) return
     await clearAllAvailability()
-    await updateCampaign({ nextSessionDate: null, dateVotes: {} })
+    await updateCampaign({ dateVotes: {} })
     setOpen(false)
   }
 
@@ -144,6 +150,13 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       onClick: sessionComplete,
       disabled: false,
       highlight: true,
+    },
+    {
+      icon: Trash2,
+      label: 'Clear past dates',
+      sublabel: 'Keep future availability, wipe old dates',
+      onClick: clearPastDates,
+      disabled: false,
     },
     {
       icon: Play,
