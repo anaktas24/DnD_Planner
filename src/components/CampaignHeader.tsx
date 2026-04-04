@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Dices, Swords, Menu, ChevronDown, Plus, Clock3, ChevronUp, Pencil, Trash2, Check, X } from 'lucide-react'
-import { formatDistanceToNow, parseISO, isPast, format } from 'date-fns'
+import { Dices, Swords, Menu, ChevronDown, Plus, Clock3, ChevronUp, Pencil, Trash2, Check, X, ScrollText } from 'lucide-react'
+import { parseISO, isPast, format, differenceInDays } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
-import { ToolsMenu, ProfileButton } from './ToolsMenu'
+import { ToolsMenu, SessionMenu, ProfileButton } from './ToolsMenu'
 import { NotificationBell } from './NotificationBell'
 
 const BLOG_SEEN_KEY = 'dnd_blog_last_seen'
@@ -60,10 +60,8 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
   if (!campaign) return null
 
   const nextSession = campaign.nextSessionDate ? parseISO(campaign.nextSessionDate) : null
-  const countdown =
-    nextSession && !isPast(nextSession)
-      ? formatDistanceToNow(nextSession, { addSuffix: true })
-      : null
+  const daysUntil = nextSession && !isPast(nextSession) ? differenceInDays(nextSession, new Date()) : null
+  const countdown = daysUntil !== null ? (daysUntil === 0 ? 'Today!' : `${daysUntil}d`) : null
 
   const arcHistory = campaign.arcHistory ?? []
 
@@ -269,81 +267,65 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
 
         {/* Right */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
-          <div className="hidden sm:flex items-center gap-1.5 text-stone-300 text-sm">
-            <Swords className="w-6 h-6 text-amber-600" />
-            <span>Session <span className="text-amber-400 font-bold text-2xl">#{campaign.sessionCount}</span></span>
+          <div className="hidden sm:flex items-center gap-4 text-stone-300 text-sm">
+            <div className="flex items-center gap-1.5">
+              <Swords className="w-5 h-5 text-amber-600" />
+              <span>Session <span className="text-amber-400 font-bold text-2xl">#{campaign.sessionCount}</span></span>
+            </div>
             {countdown && (
-              <>
-                <span className="text-stone-600">·</span>
-                <span className="text-amber-400 font-semibold text-xl">{countdown}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-amber-400 font-bold text-2xl">{countdown}</span>
                 {campaign.nextSessionTime && (
-                  <span className="text-amber-600 text-xl">· {campaign.nextSessionTime}</span>
+                  <span className="text-amber-600 text-base">· {campaign.nextSessionTime}</span>
                 )}
-              </>
+              </div>
             )}
           </div>
 
-          <button
-            onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
-            className={`relative text-sm md:text-base font-semibold transition-colors hidden sm:block ${
-              currentView === 'blog'
-                ? 'text-amber-300 underline underline-offset-2'
-                : hasUnreadBlog
-                ? 'text-amber-200 hover:text-amber-100'
-                : 'text-amber-400 hover:text-amber-300'
-            }`}
-            style={{
-              fontFamily: 'Cinzel, serif',
-              ...(hasUnreadBlog && currentView !== 'blog'
-                ? { textShadow: '0 0 10px rgba(251,191,36,1), 0 0 24px rgba(251,191,36,0.6)' }
-                : {}),
-            }}
-          >
-            The Story So Far
-            {hasUnreadBlog && currentView !== 'blog' && (
-              <span className="absolute -top-1 -right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            )}
-          </button>
-
           <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-3">
+            <button
+              onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
+              className={`relative p-2 rounded-lg transition-colors hidden sm:block ${
+                currentView === 'blog' ? 'text-amber-300' : hasUnreadBlog ? 'text-amber-200 hover:text-amber-100' : 'text-stone-500 hover:text-amber-400'
+              }`}
+              title="The Story So Far"
+              style={hasUnreadBlog && currentView !== 'blog' ? { filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.8))' } : {}}
+            >
+              <ScrollText className="w-5 h-5" />
+              {hasUnreadBlog && currentView !== 'blog' && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+              )}
+            </button>
+            <SessionMenu />
+            <ToolsMenu onNavigate={navigateTo} />
             <NotificationBell />
             <ProfileButton />
-            <ToolsMenu onNavigate={navigateTo} />
           </div>
         </div>
       </div>
 
       {/* Mobile second row */}
       <div className="flex sm:hidden items-center justify-between mt-1.5 pt-1.5 border-t border-amber-900/30">
-        <div className="flex items-center gap-1.5 text-stone-400 text-xs">
-          <Swords className="w-3.5 h-3.5 text-amber-600" />
-          <span>Session <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span></span>
+        <div className="flex items-center gap-3 text-stone-400 text-xs">
+          <div className="flex items-center gap-1">
+            <Swords className="w-3.5 h-3.5 text-amber-600" />
+            <span>Session <span className="text-amber-400 font-bold">#{campaign.sessionCount}</span></span>
+          </div>
           {countdown && (
-            <>
-              <span className="text-stone-600">·</span>
-              <span className="text-amber-400 font-semibold">{countdown}</span>
-            </>
+            <span className="text-amber-400 font-bold">{countdown}</span>
           )}
         </div>
         <button
           onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
-          className={`relative text-xs font-semibold transition-colors ${
-            currentView === 'blog'
-              ? 'text-amber-300 underline underline-offset-2'
-              : hasUnreadBlog
-              ? 'text-amber-200'
-              : 'text-amber-400'
+          className={`relative p-1 rounded-lg transition-colors ${
+            currentView === 'blog' ? 'text-amber-300' : hasUnreadBlog ? 'text-amber-200' : 'text-stone-500'
           }`}
-          style={{
-            fontFamily: 'Cinzel, serif',
-            ...(hasUnreadBlog && currentView !== 'blog'
-              ? { textShadow: '0 0 10px rgba(251,191,36,1), 0 0 24px rgba(251,191,36,0.6)' }
-              : {}),
-          }}
+          title="The Story So Far"
+          style={hasUnreadBlog && currentView !== 'blog' ? { filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.8))' } : {}}
         >
-          The Story So Far
+          <ScrollText className="w-4 h-4" />
           {hasUnreadBlog && currentView !== 'blog' && (
-            <span className="absolute -top-1 -right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
           )}
         </button>
       </div>

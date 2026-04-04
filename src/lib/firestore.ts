@@ -149,13 +149,19 @@ export async function clearAllAvailability(): Promise<void> {
   await batch.commit()
 }
 
-export async function clearPastAvailability(): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
+export async function clearPastAvailability(confirmedSessionDate: string | null): Promise<void> {
+  // Clear everything in the same month as the confirmed session (or current month if no date set)
+  const today = new Date().toISOString().slice(0, 10)
+  const base = confirmedSessionDate ?? today
+  const [year, month] = base.split('-').map(Number)
+  // Last day of that month (avoid UTC shift by building string manually)
+  const lastDayNum = new Date(year, month, 0).getDate()
+  const cutoff = `${year}-${String(month).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`
   const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
   const batch = writeBatch(db)
   snap.docs.forEach((docSnap) => {
     const data = docSnap.data()
-    const filter = (dates: string[]) => (dates ?? []).filter((d) => d >= today)
+    const filter = (dates: string[]) => (dates ?? []).filter((d) => d > cutoff)
     batch.update(doc(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
       availability: filter(data.availability),
       confirmedDates: filter(data.confirmedDates),

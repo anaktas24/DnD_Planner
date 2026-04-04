@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper,
+  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper, CalendarDays,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearAllAvailability, clearPastAvailability, sendNotification } from '../lib/firestore'
@@ -14,18 +14,16 @@ interface ToolsMenuProps {
   onNavigate: (view: View) => void
 }
 
-export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
+// ── Session Menu (calendar icon) ──────────────────────────────────────────────
+
+export function SessionMenu() {
   const [open, setOpen] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
-  const [reminderOpen, setReminderOpen] = useState(false)
-  const [reminderText, setReminderText] = useState('')
-  const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  const { campaign, players, notes, allGreenDates } = useCampaignStore()
+  const { campaign, players, allGreenDates } = useCampaignStore()
   const greenDates = allGreenDates()
+  const missing = players.filter((p) => p.availability.length === 0)
 
-  // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -33,9 +31,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
-
-  // Who hasn't marked any dates
-  const missing = players.filter((p) => p.availability.length === 0)
 
   async function startCountdown() {
     if (greenDates.length === 1) {
@@ -75,11 +70,131 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   }
 
   async function clearPastDates() {
-    if (!confirm('Clear all past dates from everyone\'s availability? Future dates stay.')) return
-    await clearPastAvailability()
+    const sessionDate = campaign?.nextSessionDate ?? null
+    if (!confirm('Clear all dates up to and including the confirmed session date? Future dates stay.')) return
+    await clearPastAvailability(sessionDate)
     await updateCampaign({ dateVotes: {} })
     setOpen(false)
   }
+
+  const items = [
+    {
+      icon: PartyPopper,
+      label: 'Session complete!',
+      sublabel: 'Bump count, reset date & votes',
+      onClick: sessionComplete,
+      disabled: false,
+      highlight: true,
+    },
+    {
+      icon: Trash2,
+      label: 'Clear past dates',
+      sublabel: 'Wipe this month, keep future availability',
+      onClick: clearPastDates,
+      disabled: false,
+    },
+    {
+      icon: Play,
+      label: 'Start countdown',
+      sublabel: greenDates.length === 1 ? `Set ${format(parseISO(greenDates[0]), 'MMM d')} as next session` : 'Need exactly 1 green date',
+      onClick: startCountdown,
+      disabled: greenDates.length !== 1 || !!campaign?.nextSessionDate,
+    },
+    {
+      icon: XCircle,
+      label: 'Reset session date',
+      sublabel: 'Clear date + time',
+      onClick: resetSession,
+      disabled: !campaign?.nextSessionDate,
+    },
+    {
+      icon: XCircle,
+      label: 'Reset time only',
+      sublabel: 'Reopen time voting, keep date',
+      onClick: resetTimeOnly,
+      disabled: !campaign?.nextSessionTime,
+    },
+    {
+      icon: PlusCircle,
+      label: 'Session +1',
+      sublabel: `Bump to #${(campaign?.sessionCount ?? 0) + 1}`,
+      onClick: bumpSession,
+      disabled: false,
+    },
+  ]
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={`p-2 rounded-lg transition-colors ${open ? 'bg-amber-900/40 text-amber-400' : 'text-stone-500 hover:text-amber-400'}`}
+        title="Session"
+      >
+        <CalendarDays className="w-5 h-5" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-64 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-amber-900/40">
+            <p className="text-amber-600 text-xs font-semibold uppercase tracking-wider">Session</p>
+          </div>
+
+          {missing.length > 0 && (
+            <div className="px-3 py-2 bg-red-950/40 border-b border-red-900/40">
+              <div className="flex items-center gap-1.5 text-red-400 text-xs font-semibold mb-1">
+                <UserX className="w-3.5 h-3.5" />
+                Hasn't marked dates yet
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {missing.map((p) => (
+                  <span key={p.id} className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: p.color + '30', color: p.color }}>
+                    {p.characterName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {items.map((item) => (
+            <button
+              key={item.label}
+              onClick={item.onClick}
+              disabled={item.disabled}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors disabled:opacity-30 disabled:cursor-not-allowed
+                ${item.highlight ? 'hover:bg-emerald-900/30' : 'hover:bg-dungeon-700'}`}
+            >
+              <item.icon className={`w-4 h-4 shrink-0 ${item.highlight ? 'text-emerald-400' : 'text-amber-600'}`} />
+              <div>
+                <p className={`text-sm font-medium ${item.highlight ? 'text-emerald-300' : 'text-stone-200'}`}>{item.label}</p>
+                <p className="text-stone-600 text-xs">{item.sublabel}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Tools Menu (gear icon) ────────────────────────────────────────────────────
+
+export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
+  const [open, setOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [reminderOpen, setReminderOpen] = useState(false)
+  const [reminderText, setReminderText] = useState('')
+  const [copied, setCopied] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const { campaign, players, notes } = useCampaignStore()
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   async function clearAvailability() {
     if (!confirm('Clear ALL availability for everyone? This cannot be undone.')) return
@@ -144,69 +259,11 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
   const items = [
     {
-      icon: PartyPopper,
-      label: 'Session complete!',
-      sublabel: 'Bump count, clear dates & availability',
-      onClick: sessionComplete,
-      disabled: false,
-      highlight: true,
-    },
-    {
-      icon: Trash2,
-      label: 'Clear past dates',
-      sublabel: 'Keep future availability, wipe old dates',
-      onClick: clearPastDates,
-      disabled: false,
-    },
-    {
-      icon: Play,
-      label: 'Start countdown',
-      sublabel: greenDates.length === 1 ? `Set ${format(parseISO(greenDates[0]), 'MMM d')} as next session` : 'Need exactly 1 green date',
-      onClick: startCountdown,
-      disabled: greenDates.length !== 1 || !!campaign?.nextSessionDate,
-    },
-    {
-      icon: XCircle,
-      label: 'Reset session date',
-      sublabel: 'Clear date + time',
-      onClick: resetSession,
-      disabled: !campaign?.nextSessionDate,
-    },
-    {
-      icon: XCircle,
-      label: 'Reset time only',
-      sublabel: 'Reopen time voting, keep date',
-      onClick: resetTimeOnly,
-      disabled: !campaign?.nextSessionTime,
-    },
-    {
-      icon: PlusCircle,
-      label: 'Session +1',
-      sublabel: `Bump to #${(campaign?.sessionCount ?? 0) + 1}`,
-      onClick: bumpSession,
-      disabled: false,
-    },
-    {
       icon: copied ? Check : Copy,
       label: copied ? 'Copied!' : 'Copy Discord summary',
       sublabel: 'Paste into your channel',
       onClick: copyDiscordSummary,
       disabled: false,
-    },
-    {
-      icon: ScrollText,
-      label: 'Session history',
-      sublabel: `${notes.length} session${notes.length !== 1 ? 's' : ''} logged`,
-      onClick: () => { setHistoryOpen(true); setOpen(false) },
-      disabled: notes.length === 0,
-    },
-    {
-      icon: Trash2,
-      label: 'Clear all availability',
-      sublabel: 'Fresh start for new month',
-      onClick: clearAvailability,
-      disabled: false,
-      danger: true,
     },
     {
       icon: Send,
@@ -221,6 +278,21 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       sublabel: 'Push a notification to all players',
       onClick: () => { setReminderOpen(true); setOpen(false) },
       disabled: false,
+    },
+    {
+      icon: ScrollText,
+      label: 'Session history',
+      sublabel: `${notes.length} session${notes.length !== 1 ? 's' : ''} logged`,
+      onClick: () => { setHistoryOpen(true); setOpen(false) },
+      disabled: notes.length === 0,
+    },
+    {
+      icon: Trash2,
+      label: 'Clear all availability',
+      sublabel: 'Nuclear option — wipes everything',
+      onClick: clearAvailability,
+      disabled: false,
+      danger: true,
     },
     {
       icon: Shield,
@@ -244,34 +316,17 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
         {open && (
           <div className="absolute right-0 top-full mt-2 w-64 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden">
-            {/* Who's missing */}
-            {missing.length > 0 && (
-              <div className="px-3 py-2 bg-red-950/40 border-b border-red-900/40">
-                <div className="flex items-center gap-1.5 text-red-400 text-xs font-semibold mb-1">
-                  <UserX className="w-3.5 h-3.5" />
-                  Hasn't marked dates yet
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {missing.map((p) => (
-                    <span key={p.id} className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: p.color + '30', color: p.color }}>
-                      {p.characterName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {items.map((item) => (
               <button
                 key={item.label}
                 onClick={item.onClick}
                 disabled={item.disabled}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors disabled:opacity-30 disabled:cursor-not-allowed
-                  ${item.danger ? 'hover:bg-red-900/30' : item.highlight ? 'hover:bg-emerald-900/30' : 'hover:bg-dungeon-700'}`}
+                  ${item.danger ? 'hover:bg-red-900/30' : 'hover:bg-dungeon-700'}`}
               >
-                <item.icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-red-500' : item.highlight ? 'text-emerald-400' : 'text-amber-600'}`} />
+                <item.icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-red-500' : 'text-amber-600'}`} />
                 <div>
-                  <p className={`text-sm font-medium ${item.danger ? 'text-red-400' : item.highlight ? 'text-emerald-300' : 'text-stone-200'}`}>{item.label}</p>
+                  <p className={`text-sm font-medium ${item.danger ? 'text-red-400' : 'text-stone-200'}`}>{item.label}</p>
                   <p className="text-stone-600 text-xs">{item.sublabel}</p>
                 </div>
               </button>
@@ -341,6 +396,8 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   )
 }
 
+// ── Profile Button ────────────────────────────────────────────────────────────
+
 export function ProfileButton() {
   const [open, setOpen] = useState(false)
   const players = useCampaignStore((s) => s.players)
@@ -356,16 +413,16 @@ export function ProfileButton() {
     'Half-Orc','Tiefling','Dragonborn','Aasimar','Tabaxi','Kenku','Other',
   ]
   const COLOR_PRESETS = [
-    '#FF8080','#CC1A00',  // light red, dark red
-    '#FFBB66','#CC5200',  // light orange, dark orange
-    '#FFE566','#997700',  // light yellow, dark yellow
-    '#66DD88','#1A7A3A',  // light green, dark green
-    '#66D9E8','#0A6E7A',  // light teal, dark teal
-    '#66AAFF','#003DB3',  // light blue, dark blue
-    '#9B99E8','#2E2B99',  // light indigo, dark indigo
-    '#D499EE','#7A1FA0',  // light purple, dark purple
-    '#FF99BB','#CC003D',  // light pink, dark pink
-    '#FFAA80','#CC3300',  // light coral, dark coral
+    '#FF8080','#CC1A00',
+    '#FFBB66','#CC5200',
+    '#FFE566','#997700',
+    '#66DD88','#1A7A3A',
+    '#66D9E8','#0A6E7A',
+    '#66AAFF','#003DB3',
+    '#9B99E8','#2E2B99',
+    '#D499EE','#7A1FA0',
+    '#FF99BB','#CC003D',
+    '#FFAA80','#CC3300',
   ]
 
   const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0] })
