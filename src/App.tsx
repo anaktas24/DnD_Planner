@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import { auth, db } from './lib/firebase'
 import { useFirestore } from './hooks/useFirestore'
 import { useCampaignStore } from './store/useCampaignStore'
 import { updateCampaign } from './lib/firestore'
@@ -8,22 +11,43 @@ import { Calendar } from './components/Calendar'
 import { JoinScreen } from './components/JoinScreen'
 import { BlogPage } from './components/BlogPage'
 import { AdminPanel } from './components/AdminPanel'
+import type { User } from 'firebase/auth'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
 type View = 'home' | 'blog' | 'admin'
 
 export default function App() {
   useFirestore()
 
   const [ready, setReady] = useState(false)
-  const [playerId, setPlayerId] = useState<string | null>(
-    () => localStorage.getItem(PLAYER_ID_KEY)
-  )
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null)
+  const [playerId, setPlayerId] = useState<string | null>(null)
   const [rosterOpen, setRosterOpen] = useState(false)
   const [currentView, setCurrentView] = useState<View>('home')
 
+  const { setActivePlayer, campaign, players } = useCampaignStore()
+
+  // Listen to Firebase Auth state
   useEffect(() => {
-    const timeout = setTimeout(() => setReady(true), 8000)
+    return onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user)
+      if (user) {
+        // Check if this user already has a player doc
+        const playerSnap = await getDoc(doc(db, 'campaigns', 'main', 'players', user.uid))
+        if (playerSnap.exists()) {
+          setPlayerId(user.uid)
+        } else {
+          setPlayerId(null) // will show JoinScreen for character creation
+        }
+      } else {
+        setPlayerId(null)
+      }
+      setReady(true)
+    })
+  }, [])
+
+  // Wait for campaign doc (or create it)
+  useEffect(() => {
+    const timeout = setTimeout(() => {}, 8000)
     import('./lib/firebase').then(({ db }) => {
       import('firebase/firestore').then(({ doc, getDoc }) => {
         getDoc(doc(db, 'campaigns', 'main')).then((snap) => {
@@ -36,20 +60,15 @@ export default function App() {
               sessionCount: 0,
               nextSessionDate: null,
               createdAt: new Date().toISOString(),
-            }).then(() => setReady(true)).catch(() => setReady(true))
-          } else {
-            setReady(true)
+            })
           }
-        }).catch(() => { clearTimeout(timeout); setReady(true) })
+        }).catch(() => clearTimeout(timeout))
       })
     })
     return () => clearTimeout(timeout)
   }, [])
 
-  const { setActivePlayer, campaign, players } = useCampaignStore()
-
   function handleJoined(id: string) {
-    localStorage.setItem(PLAYER_ID_KEY, id)
     setPlayerId(id)
     setActivePlayer(id)
   }
@@ -63,7 +82,6 @@ export default function App() {
     if (!playerId || players.length === 0) return
     const stillExists = players.some((p) => p.id === playerId)
     if (!stillExists) {
-      localStorage.removeItem(PLAYER_ID_KEY)
       setPlayerId(null)
     }
   }, [players, playerId])
@@ -89,8 +107,8 @@ export default function App() {
     )
   }
 
-  if (!playerId) {
-    return <JoinScreen onJoined={handleJoined} />
+  if (!firebaseUser || !playerId) {
+    return <JoinScreen firebaseUser={firebaseUser} onJoined={handleJoined} />
   }
 
   return (
