@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut,
+  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearAllAvailability, sendNotification } from '../lib/firestore'
@@ -56,6 +56,22 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
   async function bumpSession() {
     await updateCampaign({ sessionCount: (campaign?.sessionCount ?? 0) + 1 })
+    setOpen(false)
+  }
+
+  async function sessionComplete() {
+    if (!confirm('Mark session as complete? This will bump the session count, clear all availability, and reset the date and votes.')) return
+    await updateCampaign({
+      sessionCount: (campaign?.sessionCount ?? 0) + 1,
+      nextSessionDate: null,
+      nextSessionTime: null,
+      dateVotes: {},
+      timeVotes: {},
+      discordDateNotified: false,
+      discordTimeNotified: false,
+      sessionLocation: null,
+    })
+    await clearAllAvailability()
     setOpen(false)
   }
 
@@ -121,6 +137,14 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   }
 
   const items = [
+    {
+      icon: PartyPopper,
+      label: 'Session complete!',
+      sublabel: 'Bump count, clear dates & availability',
+      onClick: sessionComplete,
+      disabled: false,
+      highlight: true,
+    },
     {
       icon: Play,
       label: 'Start countdown',
@@ -230,11 +254,11 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
                 onClick={item.onClick}
                 disabled={item.disabled}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors disabled:opacity-30 disabled:cursor-not-allowed
-                  ${item.danger ? 'hover:bg-red-900/30' : 'hover:bg-dungeon-700'}`}
+                  ${item.danger ? 'hover:bg-red-900/30' : item.highlight ? 'hover:bg-emerald-900/30' : 'hover:bg-dungeon-700'}`}
               >
-                <item.icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-red-500' : 'text-amber-600'}`} />
+                <item.icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-red-500' : item.highlight ? 'text-emerald-400' : 'text-amber-600'}`} />
                 <div>
-                  <p className={`text-sm font-medium ${item.danger ? 'text-red-400' : 'text-stone-200'}`}>{item.label}</p>
+                  <p className={`text-sm font-medium ${item.danger ? 'text-red-400' : item.highlight ? 'text-emerald-300' : 'text-stone-200'}`}>{item.label}</p>
                   <p className="text-stone-600 text-xs">{item.sublabel}</p>
                 </div>
               </button>
