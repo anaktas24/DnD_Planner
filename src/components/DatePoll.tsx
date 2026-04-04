@@ -4,12 +4,11 @@ import { Vote, CalendarCheck } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { voteForDate, updateCampaign, clearDateVotes } from '../lib/firestore'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
 
 export function DatePoll() {
   const { campaign, players, allGreenDates, pollWinner } = useCampaignStore()
   const greenDates = allGreenDates()
-  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myId = useCampaignStore((s) => s.activePlayerId)
   const winner = pollWinner()
 
   // Auto-resolve when everyone has voted

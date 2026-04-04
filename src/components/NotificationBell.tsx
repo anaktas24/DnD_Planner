@@ -4,13 +4,12 @@ import { formatDistanceToNow, parseISO } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { markNotificationRead } from '../lib/firestore'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { notifications } = useCampaignStore()
-  const myId = localStorage.getItem(PLAYER_ID_KEY) ?? ''
+  const myId = useCampaignStore((s) => s.activePlayerId) ?? ''
 
   const unread = notifications.filter((n) => !n.readBy.includes(myId))
 

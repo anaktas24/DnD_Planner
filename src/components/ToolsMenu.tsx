@@ -2,14 +2,13 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell, Send,
+  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearAllAvailability, sendNotification } from '../lib/firestore'
+import { signOutUser } from '../lib/firebase'
 
 type View = 'home' | 'blog' | 'admin'
-
-const PLAYER_ID_KEY = 'dnd_player_id'
 
 interface ToolsMenuProps {
   onNavigate: (view: View) => void
@@ -308,7 +307,7 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 export function ProfileButton() {
   const [open, setOpen] = useState(false)
   const players = useCampaignStore((s) => s.players)
-  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myId = useCampaignStore((s) => s.activePlayerId)
   const me = players.find((p) => p.id === myId)
 
   const CLASS_OPTIONS = [
@@ -383,6 +382,13 @@ export function ProfileButton() {
               </div>
             </div>
             <button onClick={save} className="btn-primary mt-1">Save</button>
+            <button
+              onClick={() => { setOpen(false); signOutUser() }}
+              className="flex items-center justify-center gap-2 w-full text-stone-500 hover:text-red-400 text-sm py-1 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </button>
           </div>
         </div>
       )}

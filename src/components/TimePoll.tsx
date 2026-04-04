@@ -6,12 +6,11 @@ import { updateCampaign } from '../lib/firestore'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
 const CAMPAIGN_ID = 'main'
 
 export function TimePoll() {
   const { campaign, players } = useCampaignStore()
-  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myId = useCampaignStore((s) => s.activePlayerId)
   const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
   const isAdmin = myRole === 'admin'
 

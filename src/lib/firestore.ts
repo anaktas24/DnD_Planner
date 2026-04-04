@@ -13,6 +13,7 @@ import {
   orderBy,
   query,
   runTransaction,
+  deleteField,
   Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -63,6 +64,31 @@ export async function upsertPlayer(player: Omit<Player, 'id'> & { id?: string })
   const id = player.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', id), { ...player, id }, { merge: true })
   return id
+}
+
+// Migrate old player to new Google UID (transfers data + roles, deletes old record)
+export async function migratePlayer(oldId: string, newId: string): Promise<void> {
+  const oldRef = doc(db, 'campaigns', CAMPAIGN_ID, 'players', oldId)
+  const newRef = doc(db, 'campaigns', CAMPAIGN_ID, 'players', newId)
+  const oldSnap = await getDoc(oldRef)
+  if (!oldSnap.exists()) return
+  const oldData = oldSnap.data()
+
+  // Copy player data to new UID
+  await setDoc(newRef, { ...oldData, id: newId }, { merge: true })
+
+  // Transfer role if old player had one
+  const campaignSnap = await getDoc(doc(db, 'campaigns', CAMPAIGN_ID))
+  const roles: Record<string, string> = campaignSnap.data()?.roles ?? {}
+  if (roles[oldId]) {
+    await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), {
+      [`roles.${newId}`]: roles[oldId],
+      [`roles.${oldId}`]: deleteField(),
+    })
+  }
+
+  // Delete old player doc
+  await deleteDoc(oldRef)
 }
 
 export async function kickPlayer(playerId: string): Promise<void> {

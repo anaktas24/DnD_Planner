@@ -4,11 +4,9 @@ import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign } from '../lib/firestore'
 import type { Role } from '../types'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
-
 export function AdminPanel() {
   const { campaign, players } = useCampaignStore()
-  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myId = useCampaignStore((s) => s.activePlayerId)
   const myRole: Role = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
   const isAdmin = myRole === 'admin'
   const roles = campaign?.roles ?? {}

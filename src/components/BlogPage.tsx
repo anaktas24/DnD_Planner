@@ -5,11 +5,10 @@ import { useCampaignStore } from '../store/useCampaignStore'
 import { upsertBlogPost, deleteBlogPost } from '../lib/firestore'
 import type { BlogPost } from '../types'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
 
 export function BlogPage() {
   const { blogPosts, campaign, players } = useCampaignStore()
-  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myId = useCampaignStore((s) => s.activePlayerId)
   const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
   const canWrite = myRole === 'admin' || myRole === 'editor'
 

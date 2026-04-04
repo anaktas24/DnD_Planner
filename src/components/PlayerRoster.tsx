@@ -1,7 +1,6 @@
 import { useCampaignStore } from '../store/useCampaignStore'
 import { X } from 'lucide-react'
 
-const PLAYER_ID_KEY = 'dnd_player_id'
 
 interface Props {
   onClose?: () => void
@@ -9,7 +8,7 @@ interface Props {
 
 export function PlayerRoster({ onClose }: Props) {
   const { players, activePlayerId, setActivePlayer } = useCampaignStore()
-  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myId = activePlayerId
 
   return (
     <aside className="w-64 shrink-0 bg-dungeon-900 border-r border-amber-900 p-4 flex flex-col gap-4 h-full overflow-y-auto">
