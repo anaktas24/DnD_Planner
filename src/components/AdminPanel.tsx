@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound } from 'lucide-react'
+import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign } from '../lib/firestore'
+import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign, upsertPlayer } from '../lib/firestore'
 import type { Role } from '../types'
 
 export function AdminPanel() {
@@ -38,6 +38,10 @@ export function AdminPanel() {
   async function handleResetAvailability(playerId: string, name: string) {
     if (!confirm(`Reset ${name}'s availability?`)) return
     await resetPlayerAvailability(playerId)
+  }
+
+  async function toggleDM(playerId: string, current: boolean) {
+    await upsertPlayer({ id: playerId, isDM: !current } as any)
   }
 
   async function saveAnnouncement() {
@@ -228,6 +232,15 @@ export function AdminPanel() {
                       {isMe && (
                         <span className="text-xs text-amber-600 font-semibold px-2">Admin (you)</span>
                       )}
+
+                      {/* DM toggle */}
+                      <button
+                        onClick={() => toggleDM(p.id, !!p.isDM)}
+                        className={`p-1.5 transition-colors ${p.isDM ? 'text-amber-400' : 'text-stone-600 hover:text-amber-400'}`}
+                        title={p.isDM ? 'Remove DM' : 'Mark as DM'}
+                      >
+                        <Scroll className="w-4 h-4" />
+                      </button>
 
                       {/* Reset availability */}
                       {!isMe && (

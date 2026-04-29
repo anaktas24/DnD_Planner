@@ -8,6 +8,7 @@ export interface Player {
   availability: string[] // ISO date strings "YYYY-MM-DD"
   confirmedDates: string[]
   declinedDates: string[]
+  isDM?: boolean
 }
 
 export interface SessionNote {

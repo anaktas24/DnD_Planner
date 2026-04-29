@@ -7,7 +7,7 @@ interface Props {
 }
 
 export function PlayerRoster({ onClose }: Props) {
-  const { players, activePlayerId, setActivePlayer } = useCampaignStore()
+  const { players, activePlayerId } = useCampaignStore()
   const myId = activePlayerId
 
   return (
@@ -27,7 +27,7 @@ export function PlayerRoster({ onClose }: Props) {
         {players.map((p) => (
           <button
             key={p.id}
-            onClick={() => { if (p.id === myId) { setActivePlayer(activePlayerId === p.id ? null : p.id); onClose?.() } }}
+            onClick={() => { if (p.id === myId) { onClose?.() } }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
               p.id !== myId ? 'cursor-default opacity-75' :
               activePlayerId === p.id
@@ -40,7 +40,7 @@ export function PlayerRoster({ onClose }: Props) {
               <p className={`font-medium text-sm truncate ${p.id === myId ? 'text-amber-300' : 'text-amber-100'}`}>
                 {p.characterName}
               </p>
-              <p className="text-stone-500 text-xs truncate">{p.characterRace} {p.characterClass}</p>
+              <p className="text-stone-500 text-xs truncate">{p.isDM ? '📜 Dungeon Master' : `${p.characterRace} ${p.characterClass}`}</p>
               <p className="text-stone-600 text-xs truncate">{p.name}</p>
             </div>
           </button>

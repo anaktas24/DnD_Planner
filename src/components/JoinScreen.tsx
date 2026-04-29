@@ -40,6 +40,7 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
   const [joinCodeInput, setJoinCodeInput] = useState('')
   const [joinCodeError, setJoinCodeError] = useState('')
   const [claiming, setClaiming] = useState(false)
+  const [isDM, setIsDM] = useState(false)
   const [form, setForm] = useState({
     name: '',
     characterName: '',
@@ -87,6 +88,7 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
     await upsertPlayer({
       id: firebaseUser.uid,
       ...form,
+      isDM,
       availability: [],
       confirmedDates: [],
       declinedDates: [],
@@ -176,26 +178,44 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
-        <input
-          className="input-field"
-          placeholder="Character name"
-          value={form.characterName}
-          onChange={(e) => setForm((f) => ({ ...f, characterName: e.target.value }))}
-        />
-        <select
-          className="input-field"
-          value={form.characterClass}
-          onChange={(e) => setForm((f) => ({ ...f, characterClass: e.target.value }))}
+        {/* DM toggle */}
+        <button
+          type="button"
+          onClick={() => setIsDM((d) => !d)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+            isDM ? 'bg-amber-900/40 border-amber-600 text-amber-300' : 'border-dungeon-600 text-stone-500 hover:text-stone-300'
+          }`}
         >
-          {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select
-          className="input-field"
-          value={form.characterRace}
-          onChange={(e) => setForm((f) => ({ ...f, characterRace: e.target.value }))}
-        >
-          {RACE_OPTIONS.map((r) => <option key={r}>{r}</option>)}
-        </select>
+          <span>{isDM ? '📜 Dungeon Master' : '🎲 Player'}</span>
+          <span className="text-xs opacity-60">tap to switch</span>
+        </button>
+
+        {!isDM && (
+          <input
+            className="input-field"
+            placeholder="Character name"
+            value={form.characterName}
+            onChange={(e) => setForm((f) => ({ ...f, characterName: e.target.value }))}
+          />
+        )}
+        {!isDM && (
+          <select
+            className="input-field"
+            value={form.characterClass}
+            onChange={(e) => setForm((f) => ({ ...f, characterClass: e.target.value }))}
+          >
+            {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
+          </select>
+        )}
+        {!isDM && (
+          <select
+            className="input-field"
+            value={form.characterRace}
+            onChange={(e) => setForm((f) => ({ ...f, characterRace: e.target.value }))}
+          >
+            {RACE_OPTIONS.map((r) => <option key={r}>{r}</option>)}
+          </select>
+        )}
 
         <div>
           <p className="text-stone-500 text-xs mb-2">Pick your colour</p>
@@ -230,7 +250,7 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
 
         <button
           onClick={join}
-          disabled={!form.name.trim() || !form.characterName.trim() || loading}
+          disabled={!form.name.trim() || (!isDM && !form.characterName.trim()) || loading}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Entering...' : 'Enter the Campaign'}

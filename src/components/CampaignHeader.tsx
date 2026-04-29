@@ -4,6 +4,7 @@ import { parseISO, isPast, format, differenceInDays } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
 import { ToolsMenu, SessionMenu, ProfileButton } from './ToolsMenu'
+import { InitiativeTracker } from './InitiativeTracker'
 import { NotificationBell } from './NotificationBell'
 
 const BLOG_SEEN_KEY = 'dnd_blog_last_seen'
@@ -290,6 +291,7 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
             >
               <Users className="w-5 h-5" />
             </button>
+            {isAdmin && <InitiativeTracker />}
             <button
               onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
               className={`relative p-2 rounded-lg transition-colors ${
