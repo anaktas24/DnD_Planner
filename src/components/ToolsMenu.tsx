@@ -54,6 +54,13 @@ export function SessionMenu() {
     setOpen(false)
   }
 
+  async function decreaseSession() {
+    const current = campaign?.sessionCount ?? 0
+    if (current <= 0) return
+    await updateCampaign({ sessionCount: current - 1 })
+    setOpen(false)
+  }
+
   async function sessionComplete() {
     if (!confirm('Mark session as complete? This will bump the session count and reset the date, time and votes.')) return
     await updateCampaign({
@@ -120,6 +127,13 @@ export function SessionMenu() {
       sublabel: `Bump to #${(campaign?.sessionCount ?? 0) + 1}`,
       onClick: bumpSession,
       disabled: false,
+    },
+    {
+      icon: XCircle,
+      label: 'Session -1',
+      sublabel: `Back to #${Math.max(0, (campaign?.sessionCount ?? 0) - 1)}`,
+      onClick: decreaseSession,
+      disabled: (campaign?.sessionCount ?? 0) <= 0,
     },
   ]
 
