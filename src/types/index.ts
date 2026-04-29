@@ -43,6 +43,7 @@ export interface Campaign {
   discordWebhookUrl?: string
   discordDateNotified?: boolean
   discordTimeNotified?: boolean
+  joinCode?: string | null
 
 }
 

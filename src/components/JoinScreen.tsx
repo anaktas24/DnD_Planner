@@ -35,7 +35,10 @@ interface Props {
 
 export function JoinScreen({ firebaseUser, onJoined }: Props) {
   const players = useCampaignStore((s) => s.players)
+  const campaign = useCampaignStore((s) => s.campaign)
   const [signingIn, setSigningIn] = useState(false)
+  const [joinCodeInput, setJoinCodeInput] = useState('')
+  const [joinCodeError, setJoinCodeError] = useState('')
   const [claiming, setClaiming] = useState(false)
   const [form, setForm] = useState({
     name: '',
@@ -75,6 +78,11 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
 
   async function join() {
     if (!firebaseUser || !form.name.trim() || !form.characterName.trim()) return
+    const requiredCode = campaign?.joinCode
+    if (requiredCode && joinCodeInput.trim().toLowerCase() !== requiredCode.trim().toLowerCase()) {
+      setJoinCodeError('Wrong join code.')
+      return
+    }
     setLoading(true)
     await upsertPlayer({
       id: firebaseUser.uid,
@@ -207,6 +215,18 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
             ))}
           </div>
         </div>
+
+        {campaign?.joinCode && (
+          <div className="flex flex-col gap-1">
+            <input
+              className="input-field"
+              placeholder="Join code"
+              value={joinCodeInput}
+              onChange={(e) => { setJoinCodeInput(e.target.value); setJoinCodeError('') }}
+            />
+            {joinCodeError && <p className="text-red-400 text-xs">{joinCodeError}</p>}
+          </div>
+        )}
 
         <button
           onClick={join}
