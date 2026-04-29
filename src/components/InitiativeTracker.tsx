@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Sword, X, ChevronRight, Plus, Minus, SkipForward, Trash2 } from 'lucide-react'
+import { Sword, X, ChevronRight, Plus, SkipForward, Trash2 } from 'lucide-react'
 
 interface Combatant {
   id: string
@@ -68,12 +68,6 @@ export function InitiativeTracker() {
     } else {
       setCurrentTurn(next)
     }
-  }
-
-  function changeHp(id: string, delta: number) {
-    setCombatants((prev) =>
-      prev.map((c) => c.id === id ? { ...c, hp: Math.max(0, c.hp + delta) } : c)
-    )
   }
 
   function toggleCondition(id: string, condition: string) {
@@ -198,17 +192,20 @@ export function InitiativeTracker() {
                         </p>
 
                         {/* HP */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => changeHp(c.id, -1)} className="w-6 h-6 flex items-center justify-center rounded bg-red-900/40 hover:bg-red-900/70 text-red-400 transition-colors">
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className={`text-sm font-bold w-10 text-center ${isDead ? 'text-red-500' : 'text-stone-200'}`}>
-                            {c.maxHp > 0 ? `${c.hp}/${c.maxHp}` : '—'}
-                          </span>
-                          <button onClick={() => changeHp(c.id, 1)} className="w-6 h-6 flex items-center justify-center rounded bg-emerald-900/40 hover:bg-emerald-900/70 text-emerald-400 transition-colors">
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
+                        {c.maxHp > 0 && (
+                          <div className="flex items-center gap-1 shrink-0 text-xs text-stone-500">
+                            <input
+                              type="number"
+                              value={c.hp}
+                              onChange={(e) => setCombatants((prev) =>
+                                prev.map((x) => x.id === c.id ? { ...x, hp: Math.max(0, parseInt(e.target.value) || 0) } : x)
+                              )}
+                              className={`w-10 text-center bg-dungeon-700 border border-amber-900/40 rounded text-sm font-bold focus:outline-none focus:border-amber-600 ${isDead ? 'text-red-500' : 'text-stone-200'}`}
+                            />
+                            <span>/</span>
+                            <span className="text-stone-400 font-medium">{c.maxHp}</span>
+                          </div>
+                        )}
 
                         {/* Remove */}
                         <button onClick={() => removeCombatant(c.id)} className="text-stone-600 hover:text-red-400 transition-colors ml-1">
