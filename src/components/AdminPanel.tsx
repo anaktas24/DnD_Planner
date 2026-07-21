@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll } from 'lucide-react'
+import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll, Users } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign, upsertPlayer } from '../lib/firestore'
 import type { Role } from '../types'
@@ -15,6 +15,7 @@ export function AdminPanel() {
   const [location, setLocation] = useState(campaign?.sessionLocation ?? '')
   const [webhook, setWebhook] = useState(campaign?.discordWebhookUrl ?? '')
   const [joinCode, setJoinCode] = useState(campaign?.joinCode ?? '')
+  const [minPlayers, setMinPlayers] = useState<number>(campaign?.minPlayers ?? players.length)
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState('')
 
@@ -58,6 +59,10 @@ export function AdminPanel() {
 
   async function saveJoinCode() {
     await updateCampaign({ joinCode: joinCode.trim() || null })
+  }
+
+  async function saveMinPlayers() {
+    await updateCampaign({ minPlayers })
   }
 
   async function testWebhook() {
@@ -193,6 +198,31 @@ export function AdminPanel() {
                   </button>
                 )}
               </div>
+            </section>
+
+            {/* Minimum players */}
+            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-amber-500" />
+                <h3 className="text-amber-400 font-semibold text-sm">Minimum Players for a Date</h3>
+              </div>
+              <p className="text-stone-500 text-xs">How many players must be available for a date to appear in the poll. Currently {players.length} player{players.length !== 1 ? 's' : ''} in the campaign.</p>
+              <div className="flex items-center gap-3">
+                {Array.from({ length: players.length }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setMinPlayers(n)}
+                    className={`w-9 h-9 rounded-lg border text-sm font-medium transition-colors ${
+                      minPlayers === n
+                        ? 'bg-amber-700 border-amber-500 text-amber-100'
+                        : 'bg-dungeon-900 border-amber-900/40 text-stone-400 hover:border-amber-600'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <button onClick={saveMinPlayers} className="btn-primary text-xs px-3 py-1.5 self-start">Save</button>
             </section>
 
             {/* Player management */}

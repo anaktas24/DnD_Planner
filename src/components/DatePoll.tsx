@@ -7,6 +7,7 @@ import { voteForDate, updateCampaign, clearDateVotes } from '../lib/firestore'
 
 export function DatePoll() {
   const { campaign, players, allGreenDates, pollWinner } = useCampaignStore()
+  const minPlayers = campaign?.minPlayers ?? players.length
   const greenDates = allGreenDates()
   const myId = useCampaignStore((s) => s.activePlayerId)
   const winner = pollWinner()
@@ -80,13 +81,13 @@ export function DatePoll() {
                         ) : null
                       })}
                     </div>
-                    <span className="text-stone-500 text-xs">{dateVoters.length}/{players.length}</span>
+                    <span className="text-stone-500 text-xs">{dateVoters.length}/{minPlayers}</span>
                   </div>
                 </button>
               )
             })}
           </div>
-          <p className="text-amber-600 text-xl mt-2">Poll closes when everyone votes.</p>
+          <p className="text-amber-600 text-xl mt-2">Poll closes when {minPlayers} player{minPlayers !== 1 ? 's' : ''} vote.</p>
         </>
       ) : (
         <div className="flex items-center justify-between">

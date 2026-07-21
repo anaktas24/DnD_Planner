@@ -78,7 +78,7 @@ export function SessionMenu() {
 
   async function clearPastDates() {
     const sessionDate = campaign?.nextSessionDate ?? null
-    if (!confirm('Clear all dates up to and including the confirmed session date? Future dates stay.')) return
+    if (!confirm('Clear availability from months before the session month? This month and future dates stay.')) return
     await clearPastAvailability(sessionDate)
     await updateCampaign({ dateVotes: {} })
     setOpen(false)

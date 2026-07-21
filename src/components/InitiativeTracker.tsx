@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Sword, X, ChevronRight, Plus, SkipForward, Trash2 } from 'lucide-react'
+import { Sword, X, ChevronRight, Plus, SkipForward, Trash2, GripVertical } from 'lucide-react'
 
 interface Combatant {
   id: string
@@ -39,9 +39,9 @@ export function InitiativeTracker() {
   const [initiative, setInitiative] = useState('')
   const [hp, setHp] = useState('')
   const [conditionPicker, setConditionPicker] = useState<string | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
-
-  const sorted = [...combatants].sort((a, b) => b.initiative - a.initiative)
+  const dragIndexRef = useRef<number | null>(null)
 
   function addCombatant() {
     if (!name.trim()) return
@@ -53,7 +53,13 @@ export function InitiativeTracker() {
       maxHp: parseInt(hp) || 0,
       conditions: [],
     }
-    setCombatants((prev) => [...prev, newC])
+    setCombatants((prev) => {
+      const insertAt = prev.findIndex((c) => c.initiative < newC.initiative)
+      if (insertAt === -1) return [...prev, newC]
+      const next = [...prev]
+      next.splice(insertAt, 0, newC)
+      return next
+    })
     setName('')
     setInitiative('')
     setHp('')
@@ -62,7 +68,7 @@ export function InitiativeTracker() {
 
   function nextTurn() {
     const next = currentTurn + 1
-    if (next >= sorted.length) {
+    if (next >= combatants.length) {
       setCurrentTurn(0)
       setRound((r) => r + 1)
     } else {
@@ -81,10 +87,7 @@ export function InitiativeTracker() {
   }
 
   function removeCombatant(id: string) {
-    setCombatants((prev) => {
-      const newList = prev.filter((c) => c.id !== id)
-      return newList
-    })
+    setCombatants((prev) => prev.filter((c) => c.id !== id))
     setCurrentTurn(0)
   }
 
@@ -93,6 +96,38 @@ export function InitiativeTracker() {
     setCombatants([])
     setCurrentTurn(0)
     setRound(1)
+  }
+
+  function handleDragStart(index: number) {
+    dragIndexRef.current = index
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  function handleDrop(e: React.DragEvent, toIndex: number) {
+    e.preventDefault()
+    const fromIndex = dragIndexRef.current
+    if (fromIndex === null || fromIndex === toIndex) {
+      setDragOverIndex(null)
+      return
+    }
+    const activeId = combatants[currentTurn]?.id
+    const next = [...combatants]
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    const newTurn = activeId ? next.findIndex((c) => c.id === activeId) : 0
+    setCombatants(next)
+    setCurrentTurn(newTurn >= 0 ? newTurn : 0)
+    dragIndexRef.current = null
+    setDragOverIndex(null)
+  }
+
+  function handleDragEnd() {
+    dragIndexRef.current = null
+    setDragOverIndex(null)
   }
 
   return (
@@ -165,21 +200,30 @@ export function InitiativeTracker() {
             </div>
 
             {/* Combatant list */}
-            {sorted.length === 0 ? (
+            {combatants.length === 0 ? (
               <p className="text-stone-600 text-sm italic text-center py-4">Add combatants to start tracking</p>
             ) : (
               <div className="flex flex-col gap-2">
-                {sorted.map((c, i) => {
+                {combatants.map((c, i) => {
                   const isActive = i === currentTurn
                   const isDead = c.hp === 0 && c.maxHp > 0
+                  const isDropTarget = dragOverIndex === i
                   return (
                     <div
                       key={c.id}
-                      className={`rounded-xl border p-3 flex flex-col gap-2 transition-all ${
+                      draggable
+                      onDragStart={() => handleDragStart(i)}
+                      onDragOver={(e) => handleDragOver(e, i)}
+                      onDrop={(e) => handleDrop(e, i)}
+                      onDragEnd={handleDragEnd}
+                      className={`rounded-xl border p-3 flex flex-col gap-2 transition-all cursor-grab active:cursor-grabbing ${
                         isActive ? 'border-amber-500 bg-amber-900/20' : 'border-amber-900/30 bg-dungeon-800'
-                      } ${isDead ? 'opacity-40' : ''}`}
+                      } ${isDead ? 'opacity-40' : ''} ${isDropTarget ? 'ring-2 ring-amber-500/50 scale-[1.01]' : ''}`}
                     >
                       <div className="flex items-center gap-2">
+                        {/* Drag handle */}
+                        <GripVertical className="w-4 h-4 shrink-0 text-stone-600 hover:text-stone-400 transition-colors" />
+
                         {/* Turn indicator */}
                         <ChevronRight className={`w-4 h-4 shrink-0 transition-opacity ${isActive ? 'text-amber-400 opacity-100' : 'opacity-0'}`} />
 
@@ -208,13 +252,17 @@ export function InitiativeTracker() {
                         )}
 
                         {/* Remove */}
-                        <button onClick={() => removeCombatant(c.id)} className="text-stone-600 hover:text-red-400 transition-colors ml-1">
+                        <button
+                          onClick={() => removeCombatant(c.id)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="text-stone-600 hover:text-red-400 transition-colors ml-1"
+                        >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
                       {/* Conditions */}
-                      <div className="flex flex-wrap gap-1 pl-8">
+                      <div className="flex flex-wrap gap-1 pl-10">
                         {c.conditions.map((cond) => (
                           <button
                             key={cond}
@@ -235,7 +283,7 @@ export function InitiativeTracker() {
 
                       {/* Condition picker */}
                       {conditionPicker === c.id && (
-                        <div className="flex flex-wrap gap-1 pl-8">
+                        <div className="flex flex-wrap gap-1 pl-10">
                           {ALL_CONDITIONS.filter((cond) => !c.conditions.includes(cond)).map((cond) => (
                             <button
                               key={cond}
@@ -255,12 +303,12 @@ export function InitiativeTracker() {
             )}
 
             {/* Next turn button */}
-            {sorted.length > 0 && (
+            {combatants.length > 0 && (
               <button onClick={nextTurn} className="btn-primary flex items-center justify-center gap-2">
                 <SkipForward className="w-4 h-4" />
                 Next Turn
                 <span className="text-amber-200/60 text-xs">
-                  → {sorted[(currentTurn + 1) % sorted.length]?.name}
+                  → {combatants[(currentTurn + 1) % combatants.length]?.name}
                 </span>
               </button>
             )}

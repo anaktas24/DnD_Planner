@@ -37,17 +37,17 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   setActivePlayer: (id) => set({ activePlayerId: id }),
 
   allFreeDates: (month) => {
-    const { players } = get()
+    const { campaign, players } = get()
     if (players.length === 0) return []
-    const sets = players.map((p) => new Set(p.availability))
-    const first = sets[0]
+    const min = campaign?.minPlayers ?? players.length
+    const allDates = new Set(players.flatMap((p) => p.availability))
     const common: string[] = []
-    first.forEach((date) => {
+    allDates.forEach((date) => {
       const d = new Date(date)
       if (
         d.getFullYear() === month.getFullYear() &&
         d.getMonth() === month.getMonth() &&
-        sets.every((s) => s.has(date))
+        players.filter((p) => p.availability.includes(date)).length >= min
       ) {
         common.push(date)
       }
@@ -56,11 +56,13 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   },
 
   allGreenDates: () => {
-    const { players } = get()
+    const { campaign, players } = get()
     if (players.length === 0) return []
-    const sets = players.map((p) => new Set(p.availability))
+    const min = campaign?.minPlayers ?? players.length
     const allDates = new Set(players.flatMap((p) => p.availability))
-    return [...allDates].filter((date) => sets.every((s) => s.has(date))).sort()
+    return [...allDates]
+      .filter((date) => players.filter((p) => p.availability.includes(date)).length >= min)
+      .sort()
   },
 
   pollWinner: () => {
@@ -69,9 +71,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     const votes = campaign.dateVotes
     const totalPlayers = players.length
     if (totalPlayers === 0) return null
+    const min = campaign?.minPlayers ?? totalPlayers
 
     const totalVotesCast = Object.values(votes).reduce((sum, ids) => sum + ids.length, 0)
-    if (totalVotesCast < totalPlayers) return null
+    if (totalVotesCast < min) return null
 
     let winner: string | null = null
     let maxVotes = 0

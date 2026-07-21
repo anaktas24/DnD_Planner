@@ -150,13 +150,15 @@ export async function clearAllAvailability(): Promise<void> {
 }
 
 export async function clearPastAvailability(confirmedSessionDate: string | null): Promise<void> {
-  // Clear everything in the same month as the confirmed session (or current month if no date set)
+  // Clear dates from months before the session month, keeping the session month and beyond
   const today = new Date().toISOString().slice(0, 10)
   const base = confirmedSessionDate ?? today
   const [year, month] = base.split('-').map(Number)
-  // Last day of that month (avoid UTC shift by building string manually)
-  const lastDayNum = new Date(year, month, 0).getDate()
-  const cutoff = `${year}-${String(month).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`
+  // Last day of the month before the session month
+  const prevYear = month === 1 ? year - 1 : year
+  const prevMonth = month === 1 ? 12 : month - 1
+  const lastDayNum = new Date(prevYear, prevMonth, 0).getDate()
+  const cutoff = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`
   const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
   const batch = writeBatch(db)
   snap.docs.forEach((docSnap) => {

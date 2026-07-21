@@ -45,7 +45,7 @@ export interface Campaign {
   discordDateNotified?: boolean
   discordTimeNotified?: boolean
   joinCode?: string | null
-
+  minPlayers?: number
 }
 
 export interface Notification {
