@@ -4,12 +4,12 @@ import { parseISO, isPast, format, differenceInDays } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
 import { ToolsMenu, SessionMenu, ProfileButton } from './ToolsMenu'
-import { InitiativeTracker } from './InitiativeTracker'
+import { InitiativeTrackerButton } from './InitiativeTracker'
 import { NotificationBell } from './NotificationBell'
 
 const BLOG_SEEN_KEY = 'dnd_blog_last_seen'
 
-type View = 'home' | 'blog' | 'admin'
+type View = 'home' | 'blog' | 'admin' | 'initiative'
 
 interface Props {
   onMenuClick: () => void
@@ -291,7 +291,6 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
             >
               <Users className="w-5 h-5" />
             </button>
-            {isAdmin && <InitiativeTracker />}
             <button
               onClick={() => navigateTo(currentView === 'blog' ? 'home' : 'blog')}
               className={`relative p-2 rounded-lg transition-colors ${
@@ -305,8 +304,13 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
                 <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
               )}
             </button>
-            {isAdmin && <SessionMenu />}
-            {isAdmin && <ToolsMenu onNavigate={navigateTo} />}
+            {isAdmin && (
+              <div className="flex items-center gap-0.5 bg-amber-950/30 border border-amber-800/40 rounded-lg px-1 mx-1" title="DM Tools">
+                <InitiativeTrackerButton onNavigate={() => navigateTo('initiative')} />
+                <SessionMenu />
+                <ToolsMenu onNavigate={navigateTo} />
+              </div>
+            )}
             <NotificationBell />
             <ProfileButton />
           </div>

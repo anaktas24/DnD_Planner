@@ -2,7 +2,16 @@ import { useState } from 'react'
 import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll, Users } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign, upsertPlayer } from '../lib/firestore'
+import { ConfirmDialog } from './ConfirmDialog'
 import type { Role } from '../types'
+
+interface PendingConfirm {
+  title: string
+  message: string
+  confirmLabel: string
+  danger?: boolean
+  onConfirm: () => void
+}
 
 export function AdminPanel() {
   const { campaign, players } = useCampaignStore()
@@ -18,6 +27,28 @@ export function AdminPanel() {
   const [minPlayers, setMinPlayers] = useState<number>(campaign?.minPlayers ?? players.length)
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState('')
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [savedKey, setSavedKey] = useState<string | null>(null)
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null)
+
+  async function runSave(key: string, fn: () => Promise<void>) {
+    setSavingKey(key)
+    try {
+      await fn()
+      setSavedKey(key)
+      setTimeout(() => setSavedKey((k) => (k === key ? null : k)), 1500)
+    } catch (e) {
+      alert(`Failed to save: ${e}`)
+    } finally {
+      setSavingKey(null)
+    }
+  }
+
+  function saveLabel(key: string) {
+    if (savingKey === key) return 'Saving...'
+    if (savedKey === key) return 'Saved ✓'
+    return 'Save'
+  }
 
   async function handleClaimAdmin() {
     if (!myId) return
@@ -31,14 +62,29 @@ export function AdminPanel() {
     await setRole(playerId, role)
   }
 
-  async function handleKick(playerId: string, name: string) {
-    if (!confirm(`Kick ${name} from the campaign?`)) return
-    await kickPlayer(playerId)
+  function handleKick(playerId: string, name: string) {
+    setPendingConfirm({
+      title: 'Kick Player',
+      message: `Kick ${name} from the campaign?`,
+      confirmLabel: 'Kick',
+      danger: true,
+      onConfirm: async () => {
+        setPendingConfirm(null)
+        await kickPlayer(playerId)
+      },
+    })
   }
 
-  async function handleResetAvailability(playerId: string, name: string) {
-    if (!confirm(`Reset ${name}'s availability?`)) return
-    await resetPlayerAvailability(playerId)
+  function handleResetAvailability(playerId: string, name: string) {
+    setPendingConfirm({
+      title: 'Reset Availability',
+      message: `Reset ${name}'s availability?`,
+      confirmLabel: 'Reset',
+      onConfirm: async () => {
+        setPendingConfirm(null)
+        await resetPlayerAvailability(playerId)
+      },
+    })
   }
 
   async function toggleDM(playerId: string, current: boolean) {
@@ -46,23 +92,33 @@ export function AdminPanel() {
   }
 
   async function saveAnnouncement() {
-    await updateCampaign({ pinnedAnnouncement: announcement.trim() || null })
+    await runSave('announcement', async () => {
+      await updateCampaign({ pinnedAnnouncement: announcement.trim() || null })
+    })
   }
 
   async function saveLocation() {
-    await updateCampaign({ sessionLocation: location.trim() || null })
+    await runSave('location', async () => {
+      await updateCampaign({ sessionLocation: location.trim() || null })
+    })
   }
 
   async function saveWebhook() {
-    await updateCampaign({ discordWebhookUrl: webhook.trim() || undefined })
+    await runSave('webhook', async () => {
+      await updateCampaign({ discordWebhookUrl: webhook.trim() || undefined })
+    })
   }
 
   async function saveJoinCode() {
-    await updateCampaign({ joinCode: joinCode.trim() || null })
+    await runSave('joinCode', async () => {
+      await updateCampaign({ joinCode: joinCode.trim() || null })
+    })
   }
 
   async function saveMinPlayers() {
-    await updateCampaign({ minPlayers })
+    await runSave('minPlayers', async () => {
+      await updateCampaign({ minPlayers })
+    })
   }
 
   async function testWebhook() {
@@ -132,7 +188,7 @@ export function AdminPanel() {
                 onChange={(e) => setAnnouncement(e.target.value)}
               />
               <div className="flex gap-2">
-                <button onClick={saveAnnouncement} className="btn-primary text-xs px-3 py-1.5">Save</button>
+                <button onClick={saveAnnouncement} disabled={savingKey === 'announcement'} className="btn-primary text-xs px-3 py-1.5 disabled:opacity-60">{saveLabel('announcement')}</button>
                 {announcement && (
                   <button onClick={() => { setAnnouncement(''); updateCampaign({ pinnedAnnouncement: null }) }}
                     className="text-stone-500 hover:text-stone-300 text-xs px-3 py-1.5">
@@ -154,7 +210,7 @@ export function AdminPanel() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
               />
-              <button onClick={saveLocation} className="btn-primary text-xs px-3 py-1.5 self-start">Save</button>
+              <button onClick={saveLocation} disabled={savingKey === 'location'} className="btn-primary text-xs px-3 py-1.5 self-start disabled:opacity-60">{saveLabel('location')}</button>
             </section>
 
             {/* Discord Webhook */}
@@ -171,7 +227,7 @@ export function AdminPanel() {
                 onChange={(e) => setWebhook(e.target.value)}
               />
               <div className="flex gap-2">
-                <button onClick={saveWebhook} className="btn-primary text-xs px-3 py-1.5">Save</button>
+                <button onClick={saveWebhook} disabled={savingKey === 'webhook'} className="btn-primary text-xs px-3 py-1.5 disabled:opacity-60">{saveLabel('webhook')}</button>
                 <button onClick={testWebhook} className="text-xs px-3 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">Test</button>
               </div>
             </section>
@@ -190,7 +246,7 @@ export function AdminPanel() {
                 onChange={(e) => setJoinCode(e.target.value)}
               />
               <div className="flex gap-2">
-                <button onClick={saveJoinCode} className="btn-primary text-xs px-3 py-1.5">Save</button>
+                <button onClick={saveJoinCode} disabled={savingKey === 'joinCode'} className="btn-primary text-xs px-3 py-1.5 disabled:opacity-60">{saveLabel('joinCode')}</button>
                 {joinCode && (
                   <button onClick={() => { setJoinCode(''); updateCampaign({ joinCode: null }) }}
                     className="text-stone-500 hover:text-stone-300 text-xs px-3 py-1.5">
@@ -222,7 +278,7 @@ export function AdminPanel() {
                   </button>
                 ))}
               </div>
-              <button onClick={saveMinPlayers} className="btn-primary text-xs px-3 py-1.5 self-start">Save</button>
+              <button onClick={saveMinPlayers} disabled={savingKey === 'minPlayers'} className="btn-primary text-xs px-3 py-1.5 self-start disabled:opacity-60">{saveLabel('minPlayers')}</button>
             </section>
 
             {/* Player management */}
@@ -268,6 +324,7 @@ export function AdminPanel() {
                         onClick={() => toggleDM(p.id, !!p.isDM)}
                         className={`p-1.5 transition-colors ${p.isDM ? 'text-amber-400' : 'text-stone-600 hover:text-amber-400'}`}
                         title={p.isDM ? 'Remove DM' : 'Mark as DM'}
+                        aria-label={p.isDM ? `Remove DM from ${p.characterName}` : `Mark ${p.characterName} as DM`}
                       >
                         <Scroll className="w-4 h-4" />
                       </button>
@@ -278,6 +335,7 @@ export function AdminPanel() {
                           onClick={() => handleResetAvailability(p.id, p.characterName)}
                           className="p-1.5 text-stone-600 hover:text-amber-400 transition-colors"
                           title="Reset availability"
+                          aria-label={`Reset ${p.characterName}'s availability`}
                         >
                           <RefreshCw className="w-4 h-4" />
                         </button>
@@ -289,6 +347,7 @@ export function AdminPanel() {
                           onClick={() => handleKick(p.id, p.characterName)}
                           className="p-1.5 text-stone-600 hover:text-red-400 transition-colors"
                           title="Kick player"
+                          aria-label={`Kick ${p.characterName}`}
                         >
                           <UserX className="w-4 h-4" />
                         </button>
@@ -306,6 +365,16 @@ export function AdminPanel() {
           </div>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={!!pendingConfirm}
+        title={pendingConfirm?.title ?? ''}
+        message={pendingConfirm?.message ?? ''}
+        confirmLabel={pendingConfirm?.confirmLabel}
+        danger={pendingConfirm?.danger}
+        onConfirm={() => pendingConfirm?.onConfirm()}
+        onCancel={() => setPendingConfirm(null)}
+      />
     </div>
   )
 }

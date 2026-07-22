@@ -32,6 +32,7 @@ export function NotificationBell() {
     <div className="relative" ref={ref}>
       <button
         onClick={openPanel}
+        aria-label={unread.length > 0 ? `Notifications (${unread.length} unread)` : 'Notifications'}
         className={`relative p-2 rounded-lg transition-colors ${open ? 'bg-amber-900/40 text-amber-400' : 'text-stone-500 hover:text-amber-400'}`}
       >
         <Bell className="w-5 h-5" />

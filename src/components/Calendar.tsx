@@ -44,7 +44,11 @@ export function Calendar() {
 
   async function handleDayClick(dateStr: string) {
     if (activePlayerId) {
-      await toggleAvailability(activePlayerId, dateStr)
+      try {
+        await toggleAvailability(activePlayerId, dateStr)
+      } catch (e) {
+        alert(`Failed to update availability: ${e}`)
+      }
     } else {
       setSelectedDate(dateStr)
     }
@@ -124,6 +128,7 @@ export function Calendar() {
               key={dateStr}
               onClick={() => handleDayClick(dateStr)}
               disabled={!inMonth}
+              aria-label={`${format(day, 'MMMM d, yyyy')}${isConfirmed ? ', confirmed session' : isFree ? ', all players free' : activeMarked ? ', marked available' : ''}`}
               className={`
                 relative rounded-lg aspect-square flex flex-col items-center justify-start pt-1 pb-0.5 px-0.5
                 transition-all duration-150 border

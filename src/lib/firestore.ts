@@ -245,6 +245,17 @@ export async function markNotificationRead(notificationId: string, playerId: str
   })
 }
 
+export async function deleteNotification(notificationId: string): Promise<void> {
+  await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', notificationId))
+}
+
+export async function clearAllNotifications(): Promise<void> {
+  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'notifications'))
+  const batch = writeBatch(db)
+  snap.docs.forEach((d) => batch.delete(d.ref))
+  await batch.commit()
+}
+
 // ── Blog ──────────────────────────────────────────────────────────────────────
 
 export function subscribeBlog(cb: (posts: BlogPost[]) => void): Unsubscribe {

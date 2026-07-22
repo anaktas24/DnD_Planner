@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from './lib/firebase'
@@ -11,9 +12,13 @@ import { Calendar } from './components/Calendar'
 import { JoinScreen } from './components/JoinScreen'
 import { BlogPage } from './components/BlogPage'
 import { AdminPanel } from './components/AdminPanel'
+import { InitiativeTracker } from './components/InitiativeTracker'
 import type { User } from 'firebase/auth'
 
-type View = 'home' | 'blog' | 'admin'
+type View = 'home' | 'blog' | 'admin' | 'initiative'
+
+const PATH_TO_VIEW: Record<string, View> = { '/': 'home', '/blog': 'blog', '/admin': 'admin', '/initiative-tracker': 'initiative' }
+const VIEW_TO_PATH: Record<View, string> = { home: '/', blog: '/blog', admin: '/admin', initiative: '/initiative-tracker' }
 
 export default function App() {
   useFirestore()
@@ -22,7 +27,11 @@ export default function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null)
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [rosterOpen, setRosterOpen] = useState(false)
-  const [currentView, setCurrentView] = useState<View>('home')
+
+  const location = useLocation()
+  const navigate = useNavigate()
+  const currentView: View = PATH_TO_VIEW[location.pathname] ?? 'home'
+  const setCurrentView = (view: View) => navigate(VIEW_TO_PATH[view])
 
   const { setActivePlayer, campaign, players } = useCampaignStore()
 
@@ -152,6 +161,7 @@ export default function App() {
         )}
         {currentView === 'blog' && <BlogPage />}
         {currentView === 'admin' && <AdminPanel />}
+        {currentView === 'initiative' && <InitiativeTracker onBack={() => setCurrentView('home')} />}
       </div>
     </div>
   )

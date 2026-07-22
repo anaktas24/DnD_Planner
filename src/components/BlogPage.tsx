@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns'
 import { PenLine, Trash2, X, Save } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { upsertBlogPost, deleteBlogPost } from '../lib/firestore'
+import { ConfirmDialog } from './ConfirmDialog'
 import type { BlogPost } from '../types'
 
 
@@ -14,6 +15,7 @@ export function BlogPage() {
 
   const [editing, setEditing] = useState<Partial<BlogPost> | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   function startNew() {
     setEditing({ title: '', content: '' })
@@ -26,23 +28,34 @@ export function BlogPage() {
   async function save() {
     if (!editing?.title?.trim() || !editing?.content?.trim() || !myId) return
     setSaving(true)
-    const me = players.find((p) => p.id === myId)
-    await upsertBlogPost({
-      id: editing.id,
-      title: editing.title,
-      content: editing.content,
-      authorId: myId,
-      authorName: me?.characterName ?? me?.name ?? 'Unknown',
-      createdAt: editing.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-    setSaving(false)
-    setEditing(null)
+    try {
+      const me = players.find((p) => p.id === myId)
+      await upsertBlogPost({
+        id: editing.id,
+        title: editing.title,
+        content: editing.content,
+        authorId: myId,
+        authorName: me?.characterName ?? me?.name ?? 'Unknown',
+        createdAt: editing.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      setEditing(null)
+    } catch (e) {
+      alert(`Failed to save entry: ${e}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  async function remove(postId: string) {
-    if (!confirm('Delete this post?')) return
-    await deleteBlogPost(postId)
+  async function confirmRemove() {
+    if (!deleteTarget) return
+    try {
+      await deleteBlogPost(deleteTarget)
+    } catch (e) {
+      alert(`Failed to delete entry: ${e}`)
+    } finally {
+      setDeleteTarget(null)
+    }
   }
 
   return (
@@ -127,12 +140,14 @@ export function BlogPage() {
                   <div className="flex gap-1 shrink-0">
                     <button
                       onClick={() => startEdit(post)}
+                      aria-label={`Edit "${post.title}"`}
                       className="p-1.5 text-stone-600 hover:text-amber-400 transition-colors"
                     >
                       <PenLine className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => remove(post.id)}
+                      onClick={() => setDeleteTarget(post.id)}
+                      aria-label={`Delete "${post.title}"`}
                       className="p-1.5 text-stone-600 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -145,6 +160,16 @@ export function BlogPage() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Entry"
+        message="Delete this post? This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={confirmRemove}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

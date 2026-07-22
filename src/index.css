@@ -19,4 +19,13 @@
     @apply bg-amber-700 hover:bg-amber-600 text-amber-100 font-semibold rounded-lg px-4 py-2
       transition-colors cursor-pointer text-sm tracking-wide;
   }
+
+  .no-spinner {
+    -moz-appearance: textfield;
+  }
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }

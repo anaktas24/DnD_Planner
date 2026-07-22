@@ -12,7 +12,7 @@ const CLASS_OPTIONS = [
 
 const RACE_OPTIONS = [
   'Human','Elf','Dwarf','Halfling','Gnome','Half-Elf',
-  'Half-Orc','Tiefling','Dragonborn','Aasimar','Tabaxi','Kenku','Other',
+  'Half-Orc','Tiefling','Dragonborn','Aasimar','Tabaxi','Kenku','Fairy','Goliath','Other',
 ]
 
 const COLOR_PRESETS = [
