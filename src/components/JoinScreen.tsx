@@ -72,9 +72,14 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
   async function claimCharacter(oldPlayerId: string) {
     if (!firebaseUser) return
     setClaiming(true)
-    await migratePlayer(oldPlayerId, firebaseUser.uid)
-    onJoined(firebaseUser.uid)
-    setClaiming(false)
+    try {
+      await migratePlayer(oldPlayerId, firebaseUser.uid)
+      onJoined(firebaseUser.uid)
+    } catch (e) {
+      alert(`Failed to claim character: ${e}`)
+    } finally {
+      setClaiming(false)
+    }
   }
 
   async function join() {
@@ -85,16 +90,21 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
       return
     }
     setLoading(true)
-    await upsertPlayer({
-      id: firebaseUser.uid,
-      ...form,
-      isDM,
-      availability: [],
-      confirmedDates: [],
-      declinedDates: [],
-    })
-    onJoined(firebaseUser.uid)
-    setLoading(false)
+    try {
+      await upsertPlayer({
+        id: firebaseUser.uid,
+        ...form,
+        isDM,
+        availability: [],
+        confirmedDates: [],
+        declinedDates: [],
+      })
+      onJoined(firebaseUser.uid)
+    } catch (e) {
+      alert(`Failed to join campaign: ${e}`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Phase 1: Not signed in with Google yet

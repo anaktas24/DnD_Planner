@@ -195,7 +195,7 @@ export function Calendar() {
         <DayModal
           date={selectedDate}
           onClose={() => setSelectedDate(null)}
-          onVote={(playerId, vote) => setVote(playerId, selectedDate, vote)}
+          onVote={(playerId, vote) => setVote(playerId, selectedDate, vote).catch((e) => alert(`Failed to update vote: ${e}`))}
           isAllFree={freeDates.has(selectedDate)}
         />
       )}

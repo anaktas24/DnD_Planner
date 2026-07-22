@@ -15,7 +15,9 @@ export function DatePoll() {
   // Auto-resolve when everyone has voted
   useEffect(() => {
     if (winner && campaign?.nextSessionDate !== winner) {
-      updateCampaign({ nextSessionDate: winner }).then(() => clearDateVotes())
+      updateCampaign({ nextSessionDate: winner })
+        .then(() => clearDateVotes())
+        .catch((e) => console.error('Failed to resolve date poll:', e))
     }
   }, [winner, campaign?.nextSessionDate])
 
@@ -32,11 +34,19 @@ export function DatePoll() {
 
   async function vote(date: string) {
     if (!myId) return
-    await voteForDate(myId, date, greenDates)
+    try {
+      await voteForDate(myId, date, greenDates)
+    } catch (e) {
+      alert(`Failed to vote: ${e}`)
+    }
   }
 
   async function confirmSingle() {
-    await updateCampaign({ nextSessionDate: greenDates[0] })
+    try {
+      await updateCampaign({ nextSessionDate: greenDates[0] })
+    } catch (e) {
+      alert(`Failed to confirm date: ${e}`)
+    }
   }
 
   return (

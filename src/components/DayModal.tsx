@@ -17,7 +17,11 @@ export function DayModal({ date, onClose, onVote, isAllFree }: Props) {
   const isNextSession = campaign?.nextSessionDate === date
 
   async function setNextSession() {
-    await updateCampaign({ nextSessionDate: isNextSession ? null : date })
+    try {
+      await updateCampaign({ nextSessionDate: isNextSession ? null : date })
+    } catch (e) {
+      alert(`Failed to set next session: ${e}`)
+    }
   }
   const existingNote = notes.find((n) => n.date === date)
   const [noteForm, setNoteForm] = useState<Partial<SessionNote>>(existingNote ?? {
@@ -30,16 +34,20 @@ export function DayModal({ date, onClose, onVote, isAllFree }: Props) {
   const [showNoteForm, setShowNoteForm] = useState(false)
 
   async function saveNote() {
-    await upsertNote({
-      ...noteForm,
-      id: existingNote?.id,
-      date,
-      sessionNumber: noteForm.sessionNumber ?? 1,
-      summary: noteForm.summary ?? '',
-      location: noteForm.location ?? '',
-      nextLocation: noteForm.nextLocation ?? '',
-    })
-    setShowNoteForm(false)
+    try {
+      await upsertNote({
+        ...noteForm,
+        id: existingNote?.id,
+        date,
+        sessionNumber: noteForm.sessionNumber ?? 1,
+        summary: noteForm.summary ?? '',
+        location: noteForm.location ?? '',
+        nextLocation: noteForm.nextLocation ?? '',
+      })
+      setShowNoteForm(false)
+    } catch (e) {
+      alert(`Failed to save session note: ${e}`)
+    }
   }
 
   return (

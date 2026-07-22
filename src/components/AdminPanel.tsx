@@ -53,13 +53,22 @@ export function AdminPanel() {
   async function handleClaimAdmin() {
     if (!myId) return
     setClaiming(true)
-    const success = await claimAdmin(myId)
-    if (!success) setClaimError('An admin already exists.')
-    setClaiming(false)
+    try {
+      const success = await claimAdmin(myId)
+      if (!success) setClaimError('An admin already exists.')
+    } catch (e) {
+      alert(`Failed to claim admin: ${e}`)
+    } finally {
+      setClaiming(false)
+    }
   }
 
   async function handleRoleChange(playerId: string, role: Role) {
-    await setRole(playerId, role)
+    try {
+      await setRole(playerId, role)
+    } catch (e) {
+      alert(`Failed to change role: ${e}`)
+    }
   }
 
   function handleKick(playerId: string, name: string) {
@@ -70,7 +79,11 @@ export function AdminPanel() {
       danger: true,
       onConfirm: async () => {
         setPendingConfirm(null)
-        await kickPlayer(playerId)
+        try {
+          await kickPlayer(playerId)
+        } catch (e) {
+          alert(`Failed to kick player: ${e}`)
+        }
       },
     })
   }
@@ -82,13 +95,21 @@ export function AdminPanel() {
       confirmLabel: 'Reset',
       onConfirm: async () => {
         setPendingConfirm(null)
-        await resetPlayerAvailability(playerId)
+        try {
+          await resetPlayerAvailability(playerId)
+        } catch (e) {
+          alert(`Failed to reset availability: ${e}`)
+        }
       },
     })
   }
 
   async function toggleDM(playerId: string, current: boolean) {
-    await upsertPlayer({ id: playerId, isDM: !current } as any)
+    try {
+      await upsertPlayer({ id: playerId, isDM: !current } as any)
+    } catch (e) {
+      alert(`Failed to update DM status: ${e}`)
+    }
   }
 
   async function saveAnnouncement() {

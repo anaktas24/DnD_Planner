@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, X, Trash2 } from 'lucide-react'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { markNotificationRead } from '../lib/firestore'
+import { markNotificationRead, deleteNotification, clearAllNotifications } from '../lib/firestore'
+import { ConfirmDialog } from './ConfirmDialog'
 
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { notifications } = useCampaignStore()
   const myId = useCampaignStore((s) => s.activePlayerId) ?? ''
@@ -28,6 +30,23 @@ export function NotificationBell() {
     }
   }
 
+  async function handleDelete(id: string) {
+    try {
+      await deleteNotification(id)
+    } catch (e) {
+      alert(`Failed to delete notification: ${e}`)
+    }
+  }
+
+  async function handleClearAll() {
+    setConfirmClearOpen(false)
+    try {
+      await clearAllNotifications()
+    } catch (e) {
+      alert(`Failed to clear notifications: ${e}`)
+    }
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -43,8 +62,17 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-72 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden">
-          <div className="px-3 py-2 border-b border-amber-900/40">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-amber-900/40">
             <p className="text-amber-500 text-xs font-bold uppercase tracking-wider">Notifications</p>
+            {notifications.length > 0 && (
+              <button
+                onClick={() => setConfirmClearOpen(true)}
+                aria-label="Clear all notifications"
+                className="flex items-center gap-1 text-stone-600 hover:text-red-400 transition-colors text-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear all
+              </button>
+            )}
           </div>
           {notifications.length === 0 ? (
             <p className="text-stone-600 text-sm italic px-3 py-4">No notifications yet.</p>
@@ -53,20 +81,39 @@ export function NotificationBell() {
               {notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`px-3 py-2.5 border-b border-amber-900/20 text-sm ${
+                  className={`group flex items-start gap-2 px-3 py-2.5 border-b border-amber-900/20 text-sm ${
                     !n.readBy.includes(myId) ? 'bg-amber-900/20' : ''
                   }`}
                 >
-                  <p className="text-stone-200">{n.message}</p>
-                  <p className="text-stone-600 text-xs mt-0.5">
-                    {formatDistanceToNow(parseISO(n.createdAt), { addSuffix: true })}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-stone-200">{n.message}</p>
+                    <p className="text-stone-600 text-xs mt-0.5">
+                      {formatDistanceToNow(parseISO(n.createdAt), { addSuffix: true })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(n.id)}
+                    aria-label="Delete notification"
+                    className="shrink-0 text-stone-600 hover:text-red-400 transition-colors p-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Clear All Notifications"
+        message="Delete all notifications? This cannot be undone."
+        confirmLabel="Clear All"
+        danger
+        onConfirm={handleClearAll}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
     </div>
   )
 }

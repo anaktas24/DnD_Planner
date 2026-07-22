@@ -33,54 +33,82 @@ export function SessionMenu() {
   }, [])
 
   async function startCountdown() {
-    if (greenDates.length === 1) {
-      await updateCampaign({ nextSessionDate: greenDates[0] })
+    try {
+      if (greenDates.length === 1) {
+        await updateCampaign({ nextSessionDate: greenDates[0] })
+      }
+    } catch (e) {
+      alert(`Failed to start countdown: ${e}`)
     }
     setOpen(false)
   }
 
   async function resetSession() {
-    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: {}, discordDateNotified: false, discordTimeNotified: false })
+    try {
+      await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: {}, discordDateNotified: false, discordTimeNotified: false })
+    } catch (e) {
+      alert(`Failed to reset session: ${e}`)
+    }
     setOpen(false)
   }
 
   async function resetTimeOnly() {
-    await updateCampaign({ nextSessionTime: null, timeVotes: {}, discordTimeNotified: false })
+    try {
+      await updateCampaign({ nextSessionTime: null, timeVotes: {}, discordTimeNotified: false })
+    } catch (e) {
+      alert(`Failed to reset time: ${e}`)
+    }
     setOpen(false)
   }
 
   async function bumpSession() {
-    await updateCampaign({ sessionCount: (campaign?.sessionCount ?? 0) + 1 })
+    try {
+      await updateCampaign({ sessionCount: (campaign?.sessionCount ?? 0) + 1 })
+    } catch (e) {
+      alert(`Failed to update session count: ${e}`)
+    }
     setOpen(false)
   }
 
   async function decreaseSession() {
     const current = campaign?.sessionCount ?? 0
     if (current <= 0) return
-    await updateCampaign({ sessionCount: current - 1 })
+    try {
+      await updateCampaign({ sessionCount: current - 1 })
+    } catch (e) {
+      alert(`Failed to update session count: ${e}`)
+    }
     setOpen(false)
   }
 
   async function sessionComplete() {
     if (!confirm('Mark session as complete? This will bump the session count and reset the date, time and votes.')) return
-    await updateCampaign({
-      sessionCount: (campaign?.sessionCount ?? 0) + 1,
-      nextSessionDate: null,
-      nextSessionTime: null,
-      dateVotes: {},
-      timeVotes: {},
-      discordDateNotified: false,
-      discordTimeNotified: false,
-      sessionLocation: null,
-    })
+    try {
+      await updateCampaign({
+        sessionCount: (campaign?.sessionCount ?? 0) + 1,
+        nextSessionDate: null,
+        nextSessionTime: null,
+        dateVotes: {},
+        timeVotes: {},
+        discordDateNotified: false,
+        discordTimeNotified: false,
+        sessionLocation: null,
+      })
+    } catch (e) {
+      alert(`Failed to complete session: ${e}`)
+    }
     setOpen(false)
   }
 
   async function clearPastDates() {
     const sessionDate = campaign?.nextSessionDate ?? null
     if (!confirm('Clear availability from months before the session month? This month and future dates stay.')) return
-    await clearPastAvailability(sessionDate)
-    await updateCampaign({ dateVotes: {} })
+    try {
+      await clearPastAvailability(sessionDate)
+      await updateCampaign({ dateVotes: {} })
+    } catch (e) {
+      alert(`Failed to clear past dates: ${e}`)
+    }
     setOpen(false)
   }
 
@@ -212,8 +240,12 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
   async function clearAvailability() {
     if (!confirm('Clear ALL availability for everyone? This cannot be undone.')) return
-    await clearAllAvailability()
-    await updateCampaign({ dateVotes: {} })
+    try {
+      await clearAllAvailability()
+      await updateCampaign({ dateVotes: {} })
+    } catch (e) {
+      alert(`Failed to clear availability: ${e}`)
+    }
     setOpen(false)
   }
 
@@ -266,9 +298,13 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
   async function sendReminder() {
     if (!reminderText.trim()) return
-    await sendNotification(reminderText.trim())
-    setReminderText('')
-    setReminderOpen(false)
+    try {
+      await sendNotification(reminderText.trim())
+      setReminderText('')
+      setReminderOpen(false)
+    } catch (e) {
+      alert(`Failed to send reminder: ${e}`)
+    }
   }
 
   const items = [
@@ -447,9 +483,13 @@ export function ProfileButton() {
 
   async function save() {
     if (!me) return
-    const { upsertPlayer } = await import('../lib/firestore')
-    await upsertPlayer({ ...me, ...form })
-    setOpen(false)
+    try {
+      const { upsertPlayer } = await import('../lib/firestore')
+      await upsertPlayer({ ...me, ...form })
+      setOpen(false)
+    } catch (e) {
+      alert(`Failed to save character: ${e}`)
+    }
   }
 
   if (!me) return null

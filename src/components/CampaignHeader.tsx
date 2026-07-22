@@ -73,27 +73,43 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
     const swapIndex = index + direction
     if (swapIndex < 0 || swapIndex >= updated.length) return
     ;[updated[index], updated[swapIndex]] = [updated[swapIndex], updated[index]]
-    await updateCampaign({ arcHistory: updated })
+    try {
+      await updateCampaign({ arcHistory: updated })
+    } catch (e) {
+      alert(`Failed to reorder arcs: ${e}`)
+    }
   }
 
   async function saveCurrentEdit() {
     if (!editingCurrentName.trim()) return
-    await updateCampaign({ name: editingCurrentName.trim() })
-    setEditingCurrent(false)
+    try {
+      await updateCampaign({ name: editingCurrentName.trim() })
+      setEditingCurrent(false)
+    } catch (e) {
+      alert(`Failed to save arc name: ${e}`)
+    }
   }
 
   async function saveArcEdit(index: number) {
     if (!editingName.trim()) return
     const updated = [...arcHistory]
     updated[index] = { ...updated[index], name: editingName.trim() }
-    await updateCampaign({ arcHistory: updated })
-    setEditingIndex(null)
+    try {
+      await updateCampaign({ arcHistory: updated })
+      setEditingIndex(null)
+    } catch (e) {
+      alert(`Failed to save arc name: ${e}`)
+    }
   }
 
   async function deleteArc(index: number) {
     if (!confirm('Delete this arc from history?')) return
     const updated = arcHistory.filter((_, i) => i !== index)
-    await updateCampaign({ arcHistory: updated })
+    try {
+      await updateCampaign({ arcHistory: updated })
+    } catch (e) {
+      alert(`Failed to delete arc: ${e}`)
+    }
   }
 
   async function switchToArc(index: number) {
@@ -101,18 +117,26 @@ export function CampaignHeader({ onMenuClick, currentView, onNavigate }: Props) 
     const currentArc = { name: campaign!.name, startedAt: campaign!.createdAt ?? new Date().toISOString() }
     const updated = [...arcHistory]
     updated[index] = currentArc
-    await updateCampaign({ name: selected.name, arcHistory: updated })
-    setDropdownOpen(false)
+    try {
+      await updateCampaign({ name: selected.name, arcHistory: updated })
+      setDropdownOpen(false)
+    } catch (e) {
+      alert(`Failed to switch arcs: ${e}`)
+    }
   }
 
   async function startNewArc() {
     if (!newArcName.trim()) return
     const currentArc = { name: campaign!.name, startedAt: campaign!.createdAt ?? new Date().toISOString() }
     const updatedHistory = [...arcHistory, currentArc]
-    await updateCampaign({ name: newArcName.trim(), arcHistory: updatedHistory })
-    setNewArcName('')
-    setNewArcMode(false)
-    setDropdownOpen(false)
+    try {
+      await updateCampaign({ name: newArcName.trim(), arcHistory: updatedHistory })
+      setNewArcName('')
+      setNewArcMode(false)
+      setDropdownOpen(false)
+    } catch (e) {
+      alert(`Failed to start new arc: ${e}`)
+    }
   }
 
   return (
