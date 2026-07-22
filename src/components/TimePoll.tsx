@@ -21,12 +21,13 @@ export function TimePoll() {
   const nextDate = campaign?.nextSessionDate
   const nextTime = campaign?.nextSessionTime
   const timeVotes: Record<string, string[]> = campaign?.timeVotes ?? {}
+  const minPlayers = campaign?.minPlayers ?? players.length
 
   const playersWhoVoted = new Set(Object.values(timeVotes).flat())
-  const allVoted = players.length > 0 && players.every((p) => playersWhoVoted.has(p.id))
+  const enoughVoted = playersWhoVoted.size > 0 && playersWhoVoted.size >= minPlayers
 
   useEffect(() => {
-    if (!allVoted) return
+    if (!enoughVoted) return
     const withVotes = HOURLY_SLOTS.filter((t) => (timeVotes[t]?.length ?? 0) > 0)
     if (withVotes.length === 0) return
     const winner = withVotes.reduce((best, t) =>
@@ -35,7 +36,7 @@ export function TimePoll() {
     if (winner && nextTime !== winner) {
       updateCampaign({ nextSessionTime: winner })
     }
-  }, [allVoted])
+  }, [enoughVoted])
 
   if (!nextDate || nextTime) return null
 
@@ -82,11 +83,14 @@ export function TimePoll() {
                   return p ? <span key={pid} role="img" aria-label={p.characterName} className="w-2 h-2 rounded-full" style={{ background: p.color }} title={p.characterName} /> : null
                 })}
               </div>
-              <span className="text-stone-600 text-xs">{voters.length}/{players.length}</span>
+              <span className="text-stone-600 text-xs">{voters.length}/{minPlayers}</span>
             </div>
           )
         })}
       </div>
+      <p className="text-stone-600 text-xs mt-2">
+        Confirms once {minPlayers} player{minPlayers !== 1 ? 's' : ''} vote for the same time.
+      </p>
     </div>
   )
 }
