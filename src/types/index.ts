@@ -1,7 +1,6 @@
 export interface Player {
   id: string
   name: string
-  theme?: 'dungeon' | 'parchment' | 'ocean' | 'fairy'
   characterName: string
   characterClass: string
   characterRace: string
@@ -9,6 +8,7 @@ export interface Player {
   availability: string[] // ISO date strings "YYYY-MM-DD"
   confirmedDates: string[]
   declinedDates: string[]
+  theme?: 'dungeon' | 'parchment' | 'ocean' | 'fairy'
 }
 
 export interface SessionNote {

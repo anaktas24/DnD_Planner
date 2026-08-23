@@ -28,6 +28,18 @@ export default function App() {
 
   const { setActivePlayer, campaign, players } = useCampaignStore()
 
+  // Apply theme whenever the logged-in player's data changes
+  useEffect(() => {
+    if (!playerId) return
+    const me = players.find((p) => p.id === playerId)
+    const theme = me?.theme
+    if (theme && theme !== 'dungeon') {
+      document.documentElement.setAttribute('data-theme', theme)
+    } else {
+      document.documentElement.removeAttribute('data-theme')
+    }
+  }, [players, playerId])
+
   // Firebase Auth — drives everything
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {

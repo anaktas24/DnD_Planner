@@ -108,7 +108,7 @@
 
 @layer components {
   .input-field {
-    @apply bg-dungeon-900 border border-theme-900/60 text-prose-200 rounded-lg px-3 py-2 text-sm
+    @apply bg-dungeon-800 border border-theme-900/60 text-prose-200 rounded-lg px-3 py-2 text-sm
       placeholder-prose-600 focus:outline-none focus:border-theme-600 transition-colors w-full;
   }
 

@@ -233,6 +233,17 @@ export function ProfileButton() {
     if (me) setForm({ name: me.name, characterName: me.characterName, characterClass: me.characterClass, characterRace: me.characterRace, color: me.color, theme: me.theme ?? 'dungeon' })
   }, [me?.id])
 
+  async function applyTheme(themeId: string) {
+    if (!me) return
+    setForm((f) => ({ ...f, theme: themeId as typeof form.theme }))
+    await upsertPlayer({ ...me, theme: themeId as typeof me.theme })
+    if (themeId === 'dungeon') {
+      document.documentElement.removeAttribute('data-theme')
+    } else {
+      document.documentElement.setAttribute('data-theme', themeId)
+    }
+  }
+
   async function save() {
     if (!me) return
     const saveData = isAdmin
@@ -316,7 +327,7 @@ export function ProfileButton() {
                 ] as const).map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => setForm((f) => ({ ...f, theme: t.id }))}
+                    onClick={() => applyTheme(t.id)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
                       form.theme === t.id
                         ? 'border-white/40 ring-1 ring-white/30'
@@ -330,7 +341,6 @@ export function ProfileButton() {
                 ))}
               </div>
             </div>
-
             <button onClick={save} className="btn-primary mt-1">Save</button>
 
             {canBecomeAdmin && (
