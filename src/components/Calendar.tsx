@@ -35,10 +35,10 @@ export function Calendar() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex-1 overflow-y-auto min-w-0">
       <DatePoll />
       <TimePoll />
-      <div className="flex-1 flex flex-col p-3 md:p-6">
+      <div className="flex flex-col p-3 md:p-6">
       {/* Month nav */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -85,7 +85,7 @@ export function Calendar() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-1 flex-1">
+      <div className="grid grid-cols-7 gap-1">
         {/* Padding cells */}
         {Array.from({ length: startPad }).map((_, i) => (
           <div key={`pad-${i}`} />
@@ -152,7 +152,7 @@ export function Calendar() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 text-xs text-stone-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs text-stone-500">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-emerald-900/50 border border-emerald-600/60 inline-block" />
           All players free

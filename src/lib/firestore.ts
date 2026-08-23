@@ -40,11 +40,20 @@ export async function setRole(playerId: string, role: Role): Promise<void> {
   })
 }
 
-export async function claimAdmin(playerId: string): Promise<boolean> {
+export async function claimAdmin(playerId: string, pin?: string): Promise<boolean> {
   const snap = await getDoc(doc(db, 'campaigns', CAMPAIGN_ID))
-  const roles: Record<string, Role> = snap.data()?.roles ?? {}
-  const hasAdmin = Object.values(roles).includes('admin')
-  if (hasAdmin) return false
+  const data = snap.data() ?? {}
+  const roles: Record<string, Role> = data.roles ?? {}
+  const storedPin: string | undefined = data.adminPin
+
+  if (storedPin) {
+    // PIN is set — anyone who knows it can become admin
+    if (pin !== storedPin) return false
+  } else {
+    // No PIN — only allowed when no admin exists yet
+    if (Object.values(roles).includes('admin')) return false
+  }
+
   await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), {
     [`roles.${playerId}`]: 'admin',
   })
@@ -123,6 +132,49 @@ export async function clearAllAvailability(): Promise<void> {
   await batch.commit()
 }
 
+export async function clearCurrentMonthUpToToday(): Promise<void> {
+  const today = new Date()
+  const y = today.getFullYear()
+  const m = String(today.getMonth() + 1).padStart(2, '0')
+  const d = String(today.getDate()).padStart(2, '0')
+  const todayStr = `${y}-${m}-${d}`
+  const monthStartStr = `${y}-${m}-01`
+
+  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
+  const batch = writeBatch(db)
+  snap.docs.forEach((docSnap) => {
+    const data = docSnap.data()
+    const inPeriod = (s: string) => s >= monthStartStr && s <= todayStr
+    batch.update(doc(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
+      availability: (data.availability ?? []).filter((s: string) => !inPeriod(s)),
+      confirmedDates: (data.confirmedDates ?? []).filter((s: string) => !inPeriod(s)),
+      declinedDates: (data.declinedDates ?? []).filter((s: string) => !inPeriod(s)),
+    })
+  })
+  await batch.commit()
+}
+
+export async function deletePastDates(): Promise<void> {
+  const today = new Date()
+  const y = today.getFullYear()
+  const m = String(today.getMonth() + 1).padStart(2, '0')
+  const d = String(today.getDate()).padStart(2, '0')
+  const todayStr = `${y}-${m}-${d}`
+
+  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
+  const batch = writeBatch(db)
+  snap.docs.forEach((docSnap) => {
+    const data = docSnap.data()
+    const isFuture = (s: string) => s > todayStr
+    batch.update(doc(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
+      availability: (data.availability ?? []).filter(isFuture),
+      confirmedDates: (data.confirmedDates ?? []).filter(isFuture),
+      declinedDates: (data.declinedDates ?? []).filter(isFuture),
+    })
+  })
+  await batch.commit()
+}
+
 // ── Date Poll ─────────────────────────────────────────────────────────────────
 
 export async function voteForDate(playerId: string, date: string, allDates: string[]): Promise<void> {
@@ -168,31 +220,6 @@ export function subscribeNotes(cb: (notes: SessionNote[]) => void): Unsubscribe 
 export async function upsertNote(note: Omit<SessionNote, 'id'> & { id?: string }): Promise<void> {
   const id = note.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notes', id), { ...note, id }, { merge: true })
-}
-
-// ── Notifications ─────────────────────────────────────────────────────────────
-
-export function subscribeNotifications(cb: (n: import('../types').Notification[]) => void): Unsubscribe {
-  return onSnapshot(
-    query(collection(db, 'campaigns', CAMPAIGN_ID, 'notifications'), orderBy('createdAt', 'desc')),
-    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as import('../types').Notification)))
-  )
-}
-
-export async function sendNotification(message: string): Promise<void> {
-  const id = crypto.randomUUID()
-  await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', id), {
-    id,
-    message,
-    createdAt: new Date().toISOString(),
-    readBy: [],
-  })
-}
-
-export async function markNotificationRead(notificationId: string, playerId: string): Promise<void> {
-  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', notificationId), {
-    readBy: arrayUnion(playerId),
-  })
 }
 
 // ── Blog ──────────────────────────────────────────────────────────────────────

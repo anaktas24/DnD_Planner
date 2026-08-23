@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from './lib/firebase'
 import { useFirestore } from './hooks/useFirestore'
 import { useCampaignStore } from './store/useCampaignStore'
 import { updateCampaign } from './lib/firestore'
@@ -24,25 +26,21 @@ export default function App() {
 
   useEffect(() => {
     const timeout = setTimeout(() => setReady(true), 8000)
-    import('./lib/firebase').then(({ db }) => {
-      import('firebase/firestore').then(({ doc, getDoc }) => {
-        getDoc(doc(db, 'campaigns', 'main')).then((snap) => {
-          clearTimeout(timeout)
-          if (!snap.exists()) {
-            updateCampaign({
-              id: 'main',
-              name: 'Our Campaign',
-              dmName: '',
-              sessionCount: 0,
-              nextSessionDate: null,
-              createdAt: new Date().toISOString(),
-            }).then(() => setReady(true)).catch(() => setReady(true))
-          } else {
-            setReady(true)
-          }
-        }).catch(() => { clearTimeout(timeout); setReady(true) })
-      })
-    })
+    getDoc(doc(db, 'campaigns', 'main')).then((snap) => {
+      clearTimeout(timeout)
+      if (!snap.exists()) {
+        updateCampaign({
+          id: 'main',
+          name: 'Our Campaign',
+          dmName: '',
+          sessionCount: 0,
+          nextSessionDate: null,
+          createdAt: new Date().toISOString(),
+        }).then(() => setReady(true)).catch(() => setReady(true))
+      } else {
+        setReady(true)
+      }
+    }).catch(() => { clearTimeout(timeout); setReady(true) })
     return () => clearTimeout(timeout)
   }, [])
 
@@ -97,7 +95,6 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-dungeon-900">
       <CampaignHeader
         onMenuClick={() => setRosterOpen(true)}
-        currentView={currentView}
         onNavigate={setCurrentView}
       />
 

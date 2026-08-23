@@ -43,14 +43,7 @@ export interface Campaign {
   discordWebhookUrl?: string
   discordDateNotified?: boolean
   discordTimeNotified?: boolean
-
-}
-
-export interface Notification {
-  id: string
-  message: string
-  createdAt: string
-  readBy: string[] // playerIds who have read it
+  adminPin?: string
 }
 
 export interface BlogPost {

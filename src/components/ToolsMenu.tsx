@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell, Send,
+  Trash2, UserX, Copy, Check, Shield, Send, LogOut, Crown,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { updateCampaign, clearAllAvailability, sendNotification } from '../lib/firestore'
+import { updateCampaign, clearCurrentMonthUpToToday, deletePastDates, upsertPlayer, claimAdmin } from '../lib/firestore'
 
 type View = 'home' | 'blog' | 'admin'
 
@@ -18,13 +18,15 @@ interface ToolsMenuProps {
 export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   const [open, setOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [reminderOpen, setReminderOpen] = useState(false)
-  const [reminderText, setReminderText] = useState('')
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const { campaign, players, notes, allGreenDates } = useCampaignStore()
   const greenDates = allGreenDates()
+  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
+  const isAdmin = myRole === 'admin'
+  const hasAdmin = campaign?.roles ? Object.values(campaign.roles).includes('admin') : false
 
   // Close on outside click
   useEffect(() => {
@@ -57,12 +59,13 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
   async function bumpSession() {
     await updateCampaign({ sessionCount: (campaign?.sessionCount ?? 0) + 1 })
+    await deletePastDates()
     setOpen(false)
   }
 
   async function clearAvailability() {
-    if (!confirm('Clear all players\' availability for a fresh month?')) return
-    await clearAllAvailability()
+    if (!confirm('Clear availability dates for the current month up to today?')) return
+    await clearCurrentMonthUpToToday()
     await updateCampaign({ nextSessionDate: null, dateVotes: {} })
     setOpen(false)
   }
@@ -114,15 +117,10 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     setOpen(false)
   }
 
-  async function sendReminder() {
-    if (!reminderText.trim()) return
-    await sendNotification(reminderText.trim())
-    setReminderText('')
-    setReminderOpen(false)
-  }
-
-  const items = [
+  type Role = 'admin' | 'editor' | 'player'
+  const allItems: { icon: React.ElementType; label: string; sublabel: string; onClick: () => void; disabled: boolean; danger?: boolean; roles: Role[] }[] = [
     {
+      roles: ['admin', 'editor'],
       icon: Play,
       label: 'Start countdown',
       sublabel: greenDates.length === 1 ? `Set ${format(parseISO(greenDates[0]), 'MMM d')} as next session` : 'Need exactly 1 green date',
@@ -130,6 +128,7 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       disabled: greenDates.length !== 1 || !!campaign?.nextSessionDate,
     },
     {
+      roles: ['admin', 'editor'],
       icon: XCircle,
       label: 'Reset session date',
       sublabel: 'Clear date + time',
@@ -137,6 +136,7 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       disabled: !campaign?.nextSessionDate,
     },
     {
+      roles: ['admin', 'editor'],
       icon: XCircle,
       label: 'Reset time only',
       sublabel: 'Reopen time voting, keep date',
@@ -144,13 +144,15 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       disabled: !campaign?.nextSessionTime,
     },
     {
+      roles: ['admin'],
       icon: PlusCircle,
-      label: 'Session +1',
-      sublabel: `Bump to #${(campaign?.sessionCount ?? 0) + 1}`,
+      label: 'Session complete',
+      sublabel: `Bump to #${(campaign?.sessionCount ?? 0) + 1} & remove past dates`,
       onClick: bumpSession,
       disabled: false,
     },
     {
+      roles: ['admin', 'editor'],
       icon: copied ? Check : Copy,
       label: copied ? 'Copied!' : 'Copy Discord summary',
       sublabel: 'Paste into your channel',
@@ -158,6 +160,7 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       disabled: false,
     },
     {
+      roles: ['admin', 'editor'],
       icon: ScrollText,
       label: 'Session history',
       sublabel: `${notes.length} session${notes.length !== 1 ? 's' : ''} logged`,
@@ -165,14 +168,16 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       disabled: notes.length === 0,
     },
     {
+      roles: ['admin'],
       icon: Trash2,
-      label: 'Clear all availability',
-      sublabel: 'Fresh start for new month',
+      label: 'Clear session',
+      sublabel: "Remove this month's dates up to today",
       onClick: clearAvailability,
       disabled: false,
       danger: true,
     },
     {
+      roles: ['admin', 'editor'],
       icon: Send,
       label: 'Post to Discord',
       sublabel: 'Send current session info to Discord',
@@ -180,20 +185,20 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       disabled: !campaign?.discordWebhookUrl,
     },
     {
-      icon: Bell,
-      label: 'Send Reminder',
-      sublabel: 'Push a notification to all players',
-      onClick: () => { setReminderOpen(true); setOpen(false) },
-      disabled: false,
-    },
-    {
+      // Visible to admins always; visible to everyone when no admin exists yet (bootstrap)
+      roles: (hasAdmin ? ['admin'] : ['admin', 'editor', 'player']) as Role[],
       icon: Shield,
       label: 'Admin Panel',
-      sublabel: 'Manage campaign & players',
+      sublabel: hasAdmin ? 'Manage campaign & players' : 'No admin yet — set one up here',
       onClick: () => { onNavigate('admin'); setOpen(false) },
       disabled: false,
     },
   ]
+
+  const items = allItems.filter((item) => item.roles.includes(myRole as Role))
+
+  // Nothing to show — hide the gear entirely
+  if (items.length === 0) return null
 
   return (
     <>
@@ -208,8 +213,8 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
         {open && (
           <div className="absolute right-0 top-full mt-2 w-64 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden">
-            {/* Who's missing */}
-            {missing.length > 0 && (
+            {/* Who's missing — admin only */}
+            {isAdmin && missing.length > 0 && (
               <div className="px-3 py-2 bg-red-950/40 border-b border-red-900/40">
                 <div className="flex items-center gap-1.5 text-red-400 text-xs font-semibold mb-1">
                   <UserX className="w-3.5 h-3.5" />
@@ -240,38 +245,10 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
                 </div>
               </button>
             ))}
+
           </div>
         )}
       </div>
-
-      {/* Send reminder modal */}
-      {reminderOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setReminderOpen(false)}>
-          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-sm mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Send Reminder</h3>
-              <button onClick={() => setReminderOpen(false)} className="text-stone-500 hover:text-stone-300">✕</button>
-            </div>
-            <textarea
-              className="input-field resize-none"
-              rows={3}
-              placeholder="e.g. Session this Saturday at 7pm — mark your dates!"
-              value={reminderText}
-              onChange={(e) => setReminderText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendReminder())}
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button onClick={sendReminder} disabled={!reminderText.trim()} className="btn-primary flex-1 disabled:opacity-50">
-                Send
-              </button>
-              <button onClick={() => setReminderOpen(false)} className="text-stone-500 hover:text-stone-300 px-3 text-sm">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Session history modal */}
       {historyOpen && (
@@ -307,9 +284,18 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
 export function ProfileButton() {
   const [open, setOpen] = useState(false)
-  const players = useCampaignStore((s) => s.players)
+  const [claimOpen, setClaimOpen] = useState(false)
+  const [pinInput, setPinInput] = useState('')
+  const [claimError, setClaimError] = useState('')
+  const [claiming, setClaiming] = useState(false)
+
+  const { players, campaign } = useCampaignStore()
   const myId = localStorage.getItem(PLAYER_ID_KEY)
   const me = players.find((p) => p.id === myId)
+  const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
+  const isAdmin = myRole === 'admin'
+  const hasPIN = !!campaign?.adminPin
+  const canBecomeAdmin = !isAdmin && hasPIN
 
   const CLASS_OPTIONS = [
     'Barbarian','Bard','Cleric','Druid','Fighter','Monk',
@@ -330,6 +316,7 @@ export function ProfileButton() {
     '#D499EE','#7A1FA0',  // light purple, dark purple
     '#FF99BB','#CC003D',  // light pink, dark pink
     '#FFAA80','#CC3300',  // light coral, dark coral
+    '#FFFFFF',             // white
   ]
 
   const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0] })
@@ -340,9 +327,22 @@ export function ProfileButton() {
 
   async function save() {
     if (!me) return
-    const { upsertPlayer } = await import('../lib/firestore')
     await upsertPlayer({ ...me, ...form })
     setOpen(false)
+  }
+
+  async function handleClaim() {
+    if (!myId) return
+    setClaiming(true)
+    setClaimError('')
+    const ok = await claimAdmin(myId, pinInput || undefined)
+    setClaiming(false)
+    if (ok) {
+      setClaimOpen(false)
+      setPinInput('')
+    } else {
+      setClaimError(hasPIN ? 'Incorrect code.' : 'An admin already exists.')
+    }
   }
 
   if (!me) return null
@@ -378,11 +378,69 @@ export function ProfileButton() {
               <div className="flex gap-2 flex-wrap">
                 {COLOR_PRESETS.map((c) => (
                   <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))} className="w-7 h-7 rounded-full transition-transform hover:scale-110"
-                    style={{ background: c, outline: form.color === c ? '2px solid white' : 'none', outlineOffset: '2px' }} />
+                    style={{ background: c, outline: form.color === c ? `2px solid ${c === '#FFFFFF' ? '#888' : 'white'}` : 'none', outlineOffset: '2px' }} />
                 ))}
               </div>
             </div>
             <button onClick={save} className="btn-primary mt-1">Save</button>
+
+            {canBecomeAdmin && (
+              <button
+                onClick={() => { setOpen(false); setClaimOpen(true) }}
+                className="flex items-center justify-center gap-2 text-amber-600 hover:text-amber-400 transition-colors text-sm py-1 border-t border-amber-900/30 pt-3"
+              >
+                <Crown className="w-4 h-4" />
+                Become Admin
+              </button>
+            )}
+
+            <button
+              onClick={() => { localStorage.removeItem(PLAYER_ID_KEY); window.location.reload() }}
+              className="flex items-center justify-center gap-2 text-stone-500 hover:text-red-400 transition-colors text-sm py-1"
+            >
+              <LogOut className="w-4 h-4" />
+              Log out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Become Admin modal */}
+      {claimOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => { setClaimOpen(false); setPinInput(''); setClaimError('') }}>
+          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-xs mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-amber-500" />
+              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Claim Admin</h3>
+            </div>
+            {hasPIN ? (
+              <>
+                <p className="text-stone-500 text-sm">Enter the admin access code.</p>
+                <input
+                  className="input-field tracking-widest"
+                  placeholder="Access code"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleClaim()}
+                  autoFocus
+                />
+              </>
+            ) : (
+              <p className="text-stone-500 text-sm">No admin exists yet. Claim admin for this campaign?</p>
+            )}
+            {claimError && <p className="text-red-400 text-xs">{claimError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handleClaim}
+                disabled={claiming || (hasPIN && !pinInput.trim())}
+                className="flex-1 bg-amber-700 hover:bg-amber-600 text-amber-100 font-semibold rounded-lg px-4 py-2 transition-colors text-sm disabled:opacity-50"
+              >
+                {claiming ? 'Claiming...' : 'Claim Admin'}
+              </button>
+              <button onClick={() => { setClaimOpen(false); setPinInput(''); setClaimError('') }} className="text-stone-500 hover:text-stone-300 text-sm px-3">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

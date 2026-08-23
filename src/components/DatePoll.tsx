@@ -87,7 +87,7 @@ export function DatePoll() {
               )
             })}
           </div>
-          <p className="text-amber-600 text-xl mt-2">Poll closes when everyone votes.</p>
+          <p className="text-amber-600 text-xs mt-2">Poll closes when everyone votes.</p>
         </>
       ) : (
         <div className="flex items-center justify-between">

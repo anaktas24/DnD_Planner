@@ -24,6 +24,7 @@ const COLOR_PRESETS = [
   '#D499EE','#7A1FA0',  // light purple, dark purple
   '#FF99BB','#CC003D',  // light pink, dark pink
   '#FFAA80','#CC3300',  // light coral, dark coral
+  '#FFFFFF',             // white
 ]
 
 interface Props {
@@ -109,7 +110,7 @@ export function JoinScreen({ onJoined }: Props) {
                 className="w-7 h-7 rounded-full transition-transform hover:scale-110"
                 style={{
                   background: c,
-                  outline: form.color === c ? '2px solid white' : 'none',
+                  outline: form.color === c ? `2px solid ${c === '#FFFFFF' ? '#888' : 'white'}` : 'none',
                   outlineOffset: '2px',
                   opacity: takenColors.has(c) && form.color !== c ? 0.3 : 1,
                 }}
