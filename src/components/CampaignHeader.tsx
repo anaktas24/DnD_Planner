@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Swords, Menu } from 'lucide-react'
+import { Swords, Menu, Sword } from 'lucide-react'
 import { D20Icon } from './D20Icon'
 import { formatDistanceToNow, parseISO, isPast } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { ToolsMenu, ProfileButton } from './ToolsMenu'
+import { SessionMenu } from './SessionMenu'
 
 const BLOG_SEEN_KEY = 'dnd_blog_last_seen'
+const PLAYER_ID_KEY = 'dnd_player_id'
 
-type View = 'home' | 'blog' | 'admin'
+type View = 'home' | 'blog' | 'admin' | 'initiative'
 
 interface Props {
   onMenuClick: () => void
@@ -26,6 +28,10 @@ export function CampaignHeader({ onMenuClick, onNavigate }: Props) {
   }, [])
 
   const hasUnreadBlog = blogPosts.length > 0 && (lastSeen === '' || blogPosts.some((p) => p.createdAt > lastSeen))
+
+  const myId = localStorage.getItem(PLAYER_ID_KEY)
+  const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
+  const isAdmin = myRole === 'admin'
 
   function openStory() {
     const now = new Date().toISOString()
@@ -100,6 +106,19 @@ export function CampaignHeader({ onMenuClick, onNavigate }: Props) {
           </button>
 
           <div className="flex items-center gap-1 border-l border-amber-900 pl-2 md:pl-3">
+            {/* Admin-only: initiative tracker + session menu */}
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => onNavigate('initiative')}
+                  className="p-2 rounded-lg text-stone-500 hover:text-amber-400 transition-colors"
+                  title="Initiative Tracker"
+                >
+                  <Sword className="w-5 h-5" />
+                </button>
+                <SessionMenu />
+              </>
+            )}
             <ProfileButton />
             <ToolsMenu onNavigate={onNavigate} />
           </div>
@@ -118,21 +137,30 @@ export function CampaignHeader({ onMenuClick, onNavigate }: Props) {
             </>
           )}
         </div>
-        <button
-          onClick={openStory}
-          className={`relative text-xs font-semibold transition-colors ${
-            hasUnreadBlog ? 'text-amber-200' : 'text-amber-400'
-          }`}
-          style={{
-            fontFamily: 'Cinzel, serif',
-            ...(hasUnreadBlog ? { textShadow: '0 0 10px rgba(251,191,36,1), 0 0 24px rgba(251,191,36,0.6)' } : {}),
-          }}
-        >
-          The Story So Far
-          {hasUnreadBlog && (
-            <span className="absolute -top-1 -right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <button onClick={() => onNavigate('initiative')} className="text-stone-500 hover:text-amber-400 transition-colors" title="Initiative">
+                <Sword className="w-4 h-4" />
+              </button>
+            </>
           )}
-        </button>
+          <button
+            onClick={openStory}
+            className={`relative text-xs font-semibold transition-colors ${
+              hasUnreadBlog ? 'text-amber-200' : 'text-amber-400'
+            }`}
+            style={{
+              fontFamily: 'Cinzel, serif',
+              ...(hasUnreadBlog ? { textShadow: '0 0 10px rgba(251,191,36,1), 0 0 24px rgba(251,191,36,0.6)' } : {}),
+            }}
+          >
+            The Story So Far
+            {hasUnreadBlog && (
+              <span className="absolute -top-1 -right-2 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+            )}
+          </button>
+        </div>
       </div>
     </header>
   )

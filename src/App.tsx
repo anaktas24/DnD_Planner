@@ -12,9 +12,10 @@ import { Calendar } from './components/Calendar'
 import { JoinScreen } from './components/JoinScreen'
 import { BlogPage } from './components/BlogPage'
 import { AdminPanel } from './components/AdminPanel'
+import { InitiativeTracker } from './components/InitiativeTracker'
 
 const PLAYER_ID_KEY = 'dnd_player_id'
-type View = 'home' | 'blog' | 'admin'
+type View = 'home' | 'blog' | 'admin' | 'initiative'
 
 export default function App() {
   useFirestore()
@@ -145,6 +146,7 @@ export default function App() {
         )}
         {currentView === 'blog' && <BlogPage />}
         {currentView === 'admin' && <AdminPanel />}
+        {currentView === 'initiative' && <InitiativeTracker onBack={() => setCurrentView('home')} />}
       </div>
     </div>
   )

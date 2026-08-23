@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
-  Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Send, LogOut, Crown,
+  Settings, ScrollText,
+  Copy, Check, Shield, Send, LogOut, Crown,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { updateCampaign, clearCurrentMonthUpToToday, deletePastDates, upsertPlayer, claimAdmin } from '../lib/firestore'
+import { upsertPlayer, claimAdmin } from '../lib/firestore'
 import { signOutUser } from '../lib/firebase'
 
 type View = 'home' | 'blog' | 'admin'
@@ -22,11 +22,9 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  const { campaign, players, notes, allGreenDates } = useCampaignStore()
-  const greenDates = allGreenDates()
+  const { campaign, players, notes } = useCampaignStore()
   const myId = localStorage.getItem(PLAYER_ID_KEY)
   const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
-  const isAdmin = myRole === 'admin'
   const hasAdmin = campaign?.roles ? Object.values(campaign.roles).includes('admin') : false
 
   // Close on outside click
@@ -37,39 +35,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
-
-  // Who hasn't marked any dates
-  const missing = players.filter((p) => p.availability.length === 0)
-
-  async function startCountdown() {
-    if (greenDates.length === 1) {
-      await updateCampaign({ nextSessionDate: greenDates[0] })
-    }
-    setOpen(false)
-  }
-
-  async function resetSession() {
-    await updateCampaign({ nextSessionDate: null, nextSessionTime: null, dateVotes: {}, timeVotes: {}, discordDateNotified: false, discordTimeNotified: false })
-    setOpen(false)
-  }
-
-  async function resetTimeOnly() {
-    await updateCampaign({ nextSessionTime: null, timeVotes: {}, discordTimeNotified: false })
-    setOpen(false)
-  }
-
-  async function bumpSession() {
-    await updateCampaign({ sessionCount: (campaign?.sessionCount ?? 0) + 1 })
-    await deletePastDates()
-    setOpen(false)
-  }
-
-  async function clearAvailability() {
-    if (!confirm('Clear availability dates for the current month up to today?')) return
-    await clearCurrentMonthUpToToday()
-    await updateCampaign({ nextSessionDate: null, dateVotes: {} })
-    setOpen(false)
-  }
 
   function copyDiscordSummary() {
     const next = campaign?.nextSessionDate
@@ -122,38 +87,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   const allItems: { icon: React.ElementType; label: string; sublabel: string; onClick: () => void; disabled: boolean; danger?: boolean; roles: Role[] }[] = [
     {
       roles: ['admin', 'editor'],
-      icon: Play,
-      label: 'Start countdown',
-      sublabel: greenDates.length === 1 ? `Set ${format(parseISO(greenDates[0]), 'MMM d')} as next session` : 'Need exactly 1 green date',
-      onClick: startCountdown,
-      disabled: greenDates.length !== 1 || !!campaign?.nextSessionDate,
-    },
-    {
-      roles: ['admin', 'editor'],
-      icon: XCircle,
-      label: 'Reset session date',
-      sublabel: 'Clear date + time',
-      onClick: resetSession,
-      disabled: !campaign?.nextSessionDate,
-    },
-    {
-      roles: ['admin', 'editor'],
-      icon: XCircle,
-      label: 'Reset time only',
-      sublabel: 'Reopen time voting, keep date',
-      onClick: resetTimeOnly,
-      disabled: !campaign?.nextSessionTime,
-    },
-    {
-      roles: ['admin'],
-      icon: PlusCircle,
-      label: 'Session complete',
-      sublabel: `Bump to #${(campaign?.sessionCount ?? 0) + 1} & remove past dates`,
-      onClick: bumpSession,
-      disabled: false,
-    },
-    {
-      roles: ['admin', 'editor'],
       icon: copied ? Check : Copy,
       label: copied ? 'Copied!' : 'Copy Discord summary',
       sublabel: 'Paste into your channel',
@@ -167,15 +100,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       sublabel: `${notes.length} session${notes.length !== 1 ? 's' : ''} logged`,
       onClick: () => { setHistoryOpen(true); setOpen(false) },
       disabled: notes.length === 0,
-    },
-    {
-      roles: ['admin'],
-      icon: Trash2,
-      label: 'Clear session',
-      sublabel: "Remove this month's dates up to today",
-      onClick: clearAvailability,
-      disabled: false,
-      danger: true,
     },
     {
       roles: ['admin', 'editor'],
@@ -214,23 +138,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
 
         {open && (
           <div className="absolute right-0 top-full mt-2 w-64 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden">
-            {/* Who's missing — admin only */}
-            {isAdmin && missing.length > 0 && (
-              <div className="px-3 py-2 bg-red-950/40 border-b border-red-900/40">
-                <div className="flex items-center gap-1.5 text-red-400 text-xs font-semibold mb-1">
-                  <UserX className="w-3.5 h-3.5" />
-                  Hasn't marked dates yet
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {missing.map((p) => (
-                    <span key={p.id} className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: p.color + '30', color: p.color }}>
-                      {p.characterName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {items.map((item) => (
               <button
                 key={item.label}
@@ -328,7 +235,10 @@ export function ProfileButton() {
 
   async function save() {
     if (!me) return
-    await upsertPlayer({ ...me, ...form })
+    const saveData = isAdmin
+      ? { ...me, ...form, characterClass: 'Dungeon Master', characterRace: '' }
+      : { ...me, ...form }
+    await upsertPlayer(saveData)
     setOpen(false)
   }
 
@@ -368,12 +278,21 @@ export function ProfileButton() {
             </div>
             <input className="input-field" placeholder="Your name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             <input className="input-field" placeholder="Character name" value={form.characterName} onChange={(e) => setForm((f) => ({ ...f, characterName: e.target.value }))} />
-            <select className="input-field" value={form.characterClass} onChange={(e) => setForm((f) => ({ ...f, characterClass: e.target.value }))}>
-              {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
-            </select>
-            <select className="input-field" value={form.characterRace} onChange={(e) => setForm((f) => ({ ...f, characterRace: e.target.value }))}>
-              {RACE_OPTIONS.map((r) => <option key={r}>{r}</option>)}
-            </select>
+            {isAdmin ? (
+              <div className="flex items-center gap-2 px-3 py-2 bg-dungeon-900/60 rounded-lg border border-amber-900/40">
+                <Crown className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className="text-amber-400 font-semibold text-sm">Dungeon Master</span>
+              </div>
+            ) : (
+              <>
+                <select className="input-field" value={form.characterClass} onChange={(e) => setForm((f) => ({ ...f, characterClass: e.target.value }))}>
+                  {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
+                </select>
+                <select className="input-field" value={form.characterRace} onChange={(e) => setForm((f) => ({ ...f, characterRace: e.target.value }))}>
+                  {RACE_OPTIONS.map((r) => <option key={r}>{r}</option>)}
+                </select>
+              </>
+            )}
             <div>
               <p className="text-stone-500 text-xs mb-2">Colour</p>
               <div className="flex gap-2 flex-wrap">

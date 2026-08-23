@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound } from 'lucide-react'
+import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, LogOut } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign } from '../lib/firestore'
 import type { Role } from '../types'
@@ -56,6 +56,12 @@ export function AdminPanel() {
 
   async function saveAdminPin() {
     await updateCampaign({ adminPin: adminPin.trim() || undefined })
+  }
+
+  async function resignAsDM() {
+    if (!myId) return
+    if (!confirm('Resign as DM? You will become a regular player. Another player will need to claim admin.')) return
+    await setRole(myId, 'player')
   }
 
   async function testWebhook() {
@@ -255,6 +261,23 @@ export function AdminPanel() {
                     </div>
                   )
                 })}
+              </div>
+            </section>
+
+            {/* Resign as DM */}
+            <section className="bg-red-950/20 border border-red-900/40 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-400 font-semibold text-sm">Resign as Dungeon Master</p>
+                  <p className="text-stone-500 text-xs mt-0.5">You will become a regular player. Someone else can claim admin via the access code.</p>
+                </div>
+                <button
+                  onClick={resignAsDM}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-red-800 text-red-400 hover:bg-red-900/30 rounded-lg transition-colors text-sm shrink-0"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Resign
+                </button>
               </div>
             </section>
           </>

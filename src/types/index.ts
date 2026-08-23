@@ -44,6 +44,10 @@ export interface Campaign {
   discordDateNotified?: boolean
   discordTimeNotified?: boolean
   adminPin?: string
+  initiative?: {
+    combatants: { id: string; name: string; initiative: number; color?: string; isPlayer?: boolean; hp?: number; maxHp?: number }[]
+    currentIndex: number
+  }
 }
 
 export interface BlogPost {
