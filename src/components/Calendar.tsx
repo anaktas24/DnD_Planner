@@ -43,19 +43,19 @@ export function Calendar() {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => setMonth((m) => subMonths(m, 1))}
-          className="p-2 text-stone-400 hover:text-amber-400 transition-colors"
+          className="p-2 text-prose-400 hover:text-theme-400 transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <h2
-          className="text-xl font-bold text-amber-400"
+          className="text-xl font-bold text-theme-400"
           style={{ fontFamily: 'Cinzel, serif' }}
         >
           {format(month, 'MMMM yyyy')}
         </h2>
         <button
           onClick={() => setMonth((m) => addMonths(m, 1))}
-          className="p-2 text-stone-400 hover:text-amber-400 transition-colors"
+          className="p-2 text-prose-400 hover:text-theme-400 transition-colors"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -65,7 +65,7 @@ export function Calendar() {
       {activePlayerId && (() => {
         const p = players.find((pl) => pl.id === activePlayerId)
         return p ? (
-          <p className="text-center text-sm text-stone-400 mb-4">
+          <p className="text-center text-sm text-prose-400 mb-4">
             Marking availability for{' '}
             <span className="font-semibold" style={{ color: p.color }}>
               {p.characterName || p.name}
@@ -78,7 +78,7 @@ export function Calendar() {
       {/* Day headers */}
       <div className="grid grid-cols-7 mb-1">
         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
-          <div key={d} className="text-center text-xs text-stone-600 font-semibold py-1 uppercase tracking-wider">
+          <div key={d} className="text-center text-xs text-prose-600 font-semibold py-1 uppercase tracking-wider">
             {d}
           </div>
         ))}
@@ -112,7 +112,7 @@ export function Calendar() {
                 transition-all duration-150 border
                 ${!inMonth ? 'opacity-0 pointer-events-none' : ''}
                 ${isFree ? 'bg-emerald-900/50 border-emerald-600/60 hover:bg-emerald-800/60' : 'border-transparent hover:bg-dungeon-800'}
-                ${today ? 'ring-1 ring-amber-500' : ''}
+                ${today ? 'ring-1 ring-theme-500' : ''}
                 ${activeMarked ? 'border-opacity-100' : ''}
               `}
               style={
@@ -123,7 +123,7 @@ export function Calendar() {
             >
               <span
                 className={`text-base font-semibold ${
-                  today ? 'text-amber-400' : isFree ? 'text-emerald-300' : 'text-stone-400'
+                  today ? 'text-theme-400' : isFree ? 'text-emerald-300' : 'text-prose-400'
                 }`}
               >
                 {format(day, 'd')}
@@ -152,7 +152,7 @@ export function Calendar() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs text-stone-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs text-prose-500">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-emerald-900/50 border border-emerald-600/60 inline-block" />
           All players free

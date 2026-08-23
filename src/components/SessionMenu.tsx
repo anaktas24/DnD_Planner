@@ -128,16 +128,16 @@ export function SessionMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`p-2 rounded-lg transition-colors ${open ? 'bg-amber-900/40 text-amber-400' : 'text-stone-500 hover:text-amber-400'}`}
+        className={`p-2 rounded-lg transition-colors ${open ? 'bg-theme-900/40 text-theme-400' : 'text-prose-500 hover:text-theme-400'}`}
         title="Session"
       >
         <CalendarDays className="w-5 h-5" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-68 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ width: '17rem' }}>
-          <div className="px-3 py-2 border-b border-amber-900/40">
-            <p className="text-amber-600 text-xs font-semibold uppercase tracking-wider">Session</p>
+        <div className="absolute right-0 top-full mt-2 w-68 bg-dungeon-800 border border-theme-800 rounded-xl shadow-2xl z-50 overflow-hidden" style={{ width: '17rem' }}>
+          <div className="px-3 py-2 border-b border-theme-900/40">
+            <p className="text-theme-600 text-xs font-semibold uppercase tracking-wider">Session</p>
           </div>
 
           {missing.length > 0 && (
@@ -164,10 +164,10 @@ export function SessionMenu() {
               className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors disabled:opacity-30 disabled:cursor-not-allowed
                 ${item.highlight ? 'hover:bg-emerald-900/30' : item.danger ? 'hover:bg-red-900/30' : 'hover:bg-dungeon-700'}`}
             >
-              <item.icon className={`w-4 h-4 shrink-0 ${item.highlight ? 'text-emerald-400' : item.danger ? 'text-red-500' : 'text-amber-600'}`} />
+              <item.icon className={`w-4 h-4 shrink-0 ${item.highlight ? 'text-emerald-400' : item.danger ? 'text-red-500' : 'text-theme-600'}`} />
               <div>
-                <p className={`text-sm font-medium ${item.highlight ? 'text-emerald-300' : item.danger ? 'text-red-400' : 'text-stone-200'}`}>{item.label}</p>
-                <p className="text-stone-600 text-xs">{item.sublabel}</p>
+                <p className={`text-sm font-medium ${item.highlight ? 'text-emerald-300' : item.danger ? 'text-red-400' : 'text-prose-200'}`}>{item.label}</p>
+                <p className="text-prose-600 text-xs">{item.sublabel}</p>
               </div>
             </button>
           ))}

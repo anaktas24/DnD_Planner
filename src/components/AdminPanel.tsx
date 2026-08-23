@@ -94,20 +94,20 @@ export function AdminPanel() {
       <div className="max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-6">
 
         <div>
-          <h2 className="text-2xl font-bold text-amber-400 mb-1" style={{ fontFamily: 'Cinzel, serif' }}>
+          <h2 className="text-2xl font-bold text-theme-400 mb-1" style={{ fontFamily: 'Cinzel, serif' }}>
             Admin Panel
           </h2>
-          <p className="text-stone-500 text-sm">Campaign management</p>
+          <p className="text-prose-500 text-sm">Campaign management</p>
         </div>
 
         {/* Claim admin */}
         {!hasAdmin && (
-          <div className="bg-amber-900/20 border border-amber-700 rounded-xl p-4">
+          <div className="bg-theme-900/20 border border-theme-700 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Crown className="w-4 h-4 text-amber-500" />
-              <p className="text-amber-400 font-semibold text-sm">No admin yet</p>
+              <Crown className="w-4 h-4 text-theme-500" />
+              <p className="text-theme-400 font-semibold text-sm">No admin yet</p>
             </div>
-            <p className="text-stone-500 text-xs mb-3">Be the first to claim admin for this campaign.</p>
+            <p className="text-prose-500 text-xs mb-3">Be the first to claim admin for this campaign.</p>
             {claimError && <p className="text-red-400 text-xs mb-2">{claimError}</p>}
             <button onClick={handleClaimAdmin} disabled={claiming} className="btn-primary text-sm">
               {claiming ? 'Claiming...' : 'Claim Admin'}
@@ -118,10 +118,10 @@ export function AdminPanel() {
         {isAdmin ? (
           <>
             {/* Pinned announcement */}
-            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
+            <section className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Pin className="w-4 h-4 text-amber-500" />
-                <h3 className="text-amber-400 font-semibold text-sm">Pinned Announcement</h3>
+                <Pin className="w-4 h-4 text-theme-500" />
+                <h3 className="text-theme-400 font-semibold text-sm">Pinned Announcement</h3>
               </div>
               <textarea
                 className="input-field resize-none"
@@ -134,7 +134,7 @@ export function AdminPanel() {
                 <button onClick={saveAnnouncement} className="btn-primary text-xs px-3 py-1.5">Save</button>
                 {announcement && (
                   <button onClick={() => { setAnnouncement(''); updateCampaign({ pinnedAnnouncement: null }) }}
-                    className="text-stone-500 hover:text-stone-300 text-xs px-3 py-1.5">
+                    className="text-prose-500 hover:text-prose-300 text-xs px-3 py-1.5">
                     Clear
                   </button>
                 )}
@@ -142,10 +142,10 @@ export function AdminPanel() {
             </section>
 
             {/* Session location */}
-            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
+            <section className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-amber-500" />
-                <h3 className="text-amber-400 font-semibold text-sm">Session Location</h3>
+                <MapPin className="w-4 h-4 text-theme-500" />
+                <h3 className="text-theme-400 font-semibold text-sm">Session Location</h3>
               </div>
               <input
                 className="input-field"
@@ -157,12 +157,12 @@ export function AdminPanel() {
             </section>
 
             {/* Discord Webhook */}
-            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
+            <section className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Webhook className="w-4 h-4 text-amber-500" />
-                <h3 className="text-amber-400 font-semibold text-sm">Discord Webhook</h3>
+                <Webhook className="w-4 h-4 text-theme-500" />
+                <h3 className="text-theme-400 font-semibold text-sm">Discord Webhook</h3>
               </div>
-              <p className="text-stone-500 text-xs">Auto-posts to Discord when the date or time poll resolves. Get your webhook URL from Discord: channel settings → Integrations → Webhooks.</p>
+              <p className="text-prose-500 text-xs">Auto-posts to Discord when the date or time poll resolves. Get your webhook URL from Discord: channel settings → Integrations → Webhooks.</p>
               <input
                 className="input-field text-xs"
                 placeholder="https://discord.com/api/webhooks/..."
@@ -171,17 +171,17 @@ export function AdminPanel() {
               />
               <div className="flex gap-2">
                 <button onClick={saveWebhook} className="btn-primary text-xs px-3 py-1.5">Save</button>
-                <button onClick={testWebhook} className="text-xs px-3 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">Test</button>
+                <button onClick={testWebhook} className="text-xs px-3 py-1.5 border border-theme-700 text-theme-400 hover:bg-theme-900/30 rounded-lg transition-colors">Test</button>
               </div>
             </section>
 
             {/* Admin Access Code */}
-            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
+            <section className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-amber-500" />
-                <h3 className="text-amber-400 font-semibold text-sm">Admin Access Code</h3>
+                <KeyRound className="w-4 h-4 text-theme-500" />
+                <h3 className="text-theme-400 font-semibold text-sm">Admin Access Code</h3>
               </div>
-              <p className="text-stone-500 text-xs">Share this code with players you want to be able to claim admin rights. Leave empty to disable PIN-based claiming.</p>
+              <p className="text-prose-500 text-xs">Share this code with players you want to be able to claim admin rights. Leave empty to disable PIN-based claiming.</p>
               <input
                 className="input-field"
                 placeholder="e.g. dragons2025"
@@ -192,7 +192,7 @@ export function AdminPanel() {
                 <button onClick={saveAdminPin} className="btn-primary text-xs px-3 py-1.5">Save</button>
                 {adminPin && (
                   <button onClick={() => { setAdminPin(''); updateCampaign({ adminPin: undefined }) }}
-                    className="text-stone-500 hover:text-stone-300 text-xs px-3 py-1.5">
+                    className="text-prose-500 hover:text-prose-300 text-xs px-3 py-1.5">
                     Clear
                   </button>
                 )}
@@ -200,10 +200,10 @@ export function AdminPanel() {
             </section>
 
             {/* Player management */}
-            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4">
+            <section className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-4 h-4 text-amber-500" />
-                <h3 className="text-amber-400 font-semibold text-sm">Players</h3>
+                <Shield className="w-4 h-4 text-theme-500" />
+                <h3 className="text-theme-400 font-semibold text-sm">Players</h3>
               </div>
               <div className="flex flex-col gap-3">
                 {players.map((p) => {
@@ -213,8 +213,8 @@ export function AdminPanel() {
                     <div key={p.id} className="flex items-center gap-3">
                       <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-stone-200 text-sm font-medium truncate">{p.characterName}</p>
-                        <p className="text-stone-600 text-xs truncate">{p.name}</p>
+                        <p className="text-prose-200 text-sm font-medium truncate">{p.characterName}</p>
+                        <p className="text-prose-600 text-xs truncate">{p.name}</p>
                       </div>
 
                       {/* Role selector */}
@@ -230,18 +230,18 @@ export function AdminPanel() {
                             <option value="editor">Editor</option>
                             <option value="admin">Admin</option>
                           </select>
-                          <ChevronDown className="w-3 h-3 text-stone-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <ChevronDown className="w-3 h-3 text-prose-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
                       )}
                       {isMe && (
-                        <span className="text-xs text-amber-600 font-semibold px-2">Admin (you)</span>
+                        <span className="text-xs text-theme-600 font-semibold px-2">Admin (you)</span>
                       )}
 
                       {/* Reset availability */}
                       {!isMe && (
                         <button
                           onClick={() => handleResetAvailability(p.id, p.characterName)}
-                          className="p-1.5 text-stone-600 hover:text-amber-400 transition-colors"
+                          className="p-1.5 text-prose-600 hover:text-theme-400 transition-colors"
                           title="Reset availability"
                         >
                           <RefreshCw className="w-4 h-4" />
@@ -252,7 +252,7 @@ export function AdminPanel() {
                       {!isMe && (
                         <button
                           onClick={() => handleKick(p.id, p.characterName)}
-                          className="p-1.5 text-stone-600 hover:text-red-400 transition-colors"
+                          className="p-1.5 text-prose-600 hover:text-red-400 transition-colors"
                           title="Kick player"
                         >
                           <UserX className="w-4 h-4" />
@@ -269,7 +269,7 @@ export function AdminPanel() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-red-400 font-semibold text-sm">Resign as Dungeon Master</p>
-                  <p className="text-stone-500 text-xs mt-0.5">You will become a regular player. Someone else can claim admin via the access code.</p>
+                  <p className="text-prose-500 text-xs mt-0.5">You will become a regular player. Someone else can claim admin via the access code.</p>
                 </div>
                 <button
                   onClick={resignAsDM}
@@ -283,8 +283,8 @@ export function AdminPanel() {
           </>
         ) : hasAdmin ? (
           <div className="text-center py-12">
-            <Shield className="w-10 h-10 text-stone-700 mx-auto mb-3" />
-            <p className="text-stone-500 text-sm">You don't have admin access.</p>
+            <Shield className="w-10 h-10 text-prose-700 mx-auto mb-3" />
+            <p className="text-prose-500 text-sm">You don't have admin access.</p>
           </div>
         ) : null}
       </div>
