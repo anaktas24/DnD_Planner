@@ -138,13 +138,6 @@ export function CampaignHeader({ onMenuClick, onNavigate }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <>
-              <button onClick={() => onNavigate('initiative')} className="text-stone-500 hover:text-amber-400 transition-colors" title="Initiative">
-                <Sword className="w-4 h-4" />
-              </button>
-            </>
-          )}
           <button
             onClick={openStory}
             className={`relative text-xs font-semibold transition-colors ${

@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { ArrowLeft, ChevronRight, ChevronLeft, Trash2, Plus, RotateCcw, Sword } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ChevronLeft, Trash2, Plus, RotateCcw, Sword, Heart } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign } from '../lib/firestore'
 
 const PLAYER_ID_KEY = 'dnd_player_id'
+
+type Combatant = { id: string; name: string; initiative: number; color?: string; isPlayer?: boolean; hp?: number; maxHp?: number }
 
 interface Props {
   onBack: () => void
@@ -15,24 +17,36 @@ export function InitiativeTracker({ onBack }: Props) {
   const myRole = myId ? (campaign?.roles?.[myId] ?? 'player') : 'player'
   const isAdmin = myRole === 'admin'
 
-  const combatants = campaign?.initiative?.combatants ?? []
+  const combatants: Combatant[] = campaign?.initiative?.combatants ?? []
   const currentIndex = campaign?.initiative?.currentIndex ?? 0
 
   const [newName, setNewName] = useState('')
   const [newInit, setNewInit] = useState('')
-  const [newColor, setNewColor] = useState('#888888')
+  const [newMaxHp, setNewMaxHp] = useState('')
+  const [newColor, setNewColor] = useState('#cc2222')
+
+  async function save(updated: Combatant[], idx?: number) {
+    await updateCampaign({
+      initiative: { combatants: updated, currentIndex: idx ?? currentIndex },
+    })
+  }
 
   async function addCombatant() {
     if (!newName.trim() || newInit === '') return
+    const hp = newMaxHp ? Number(newMaxHp) : undefined
     const updated = [...combatants, {
       id: crypto.randomUUID(),
       name: newName.trim(),
       initiative: Number(newInit),
       color: newColor,
+      isPlayer: false,
+      hp,
+      maxHp: hp,
     }].sort((a, b) => b.initiative - a.initiative)
-    await updateCampaign({ initiative: { combatants: updated, currentIndex: 0 } })
+    await save(updated, 0)
     setNewName('')
     setNewInit('')
+    setNewMaxHp('')
   }
 
   async function addPlayer(p: typeof players[0]) {
@@ -43,33 +57,57 @@ export function InitiativeTracker({ onBack }: Props) {
       name: p.characterName,
       initiative: Number(initStr),
       color: p.color,
+      isPlayer: true,
     }].sort((a, b) => b.initiative - a.initiative)
-    await updateCampaign({ initiative: { combatants: updated, currentIndex } })
+    await save(updated)
+  }
+
+  async function adjustHp(id: string, delta: number) {
+    const updated = combatants.map((c) =>
+      c.id === id && c.hp !== undefined
+        ? { ...c, hp: Math.max(0, Math.min(c.maxHp ?? 9999, c.hp + delta)) }
+        : c
+    )
+    await save(updated)
+  }
+
+  async function setHpDirect(id: string, value: number) {
+    const updated = combatants.map((c) =>
+      c.id === id ? { ...c, hp: Math.max(0, Math.min(c.maxHp ?? 9999, value)) } : c
+    )
+    await save(updated)
   }
 
   async function remove(id: string) {
     const updated = combatants.filter((c) => c.id !== id)
-    const newIdx = Math.min(currentIndex, Math.max(0, updated.length - 1))
-    await updateCampaign({ initiative: { combatants: updated, currentIndex: newIdx } })
+    await save(updated, Math.min(currentIndex, Math.max(0, updated.length - 1)))
   }
 
   async function next() {
     if (combatants.length === 0) return
-    await updateCampaign({ initiative: { combatants, currentIndex: (currentIndex + 1) % combatants.length } })
+    await save(combatants, (currentIndex + 1) % combatants.length)
   }
 
   async function prev() {
     if (combatants.length === 0) return
-    await updateCampaign({ initiative: { combatants, currentIndex: (currentIndex - 1 + combatants.length) % combatants.length } })
+    await save(combatants, (currentIndex - 1 + combatants.length) % combatants.length)
   }
 
   async function reset() {
     if (!confirm('Clear all combatants and reset initiative?')) return
-    await updateCampaign({ initiative: { combatants: [], currentIndex: 0 } })
+    await save([], 0)
   }
 
   const alreadyAdded = new Set(combatants.map((c) => c.id))
   const availablePlayers = players.filter((p) => !alreadyAdded.has(p.id))
+
+  function hpColor(hp: number, maxHp: number) {
+    const pct = hp / maxHp
+    if (pct <= 0) return 'text-stone-600'
+    if (pct <= 0.25) return 'text-red-400'
+    if (pct <= 0.5) return 'text-amber-400'
+    return 'text-emerald-400'
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
@@ -105,17 +143,12 @@ export function InitiativeTracker({ onBack }: Props) {
             <div className="text-center">
               <p className="text-stone-500 text-xs uppercase tracking-wider mb-0.5">Current Turn</p>
               <div className="flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ background: combatants[currentIndex]?.color ?? '#888' }}
-                />
+                <span className="w-3 h-3 rounded-full" style={{ background: combatants[currentIndex]?.color ?? '#888' }} />
                 <p className="text-amber-300 font-bold text-xl" style={{ fontFamily: 'Cinzel, serif' }}>
                   {combatants[currentIndex]?.name}
                 </p>
               </div>
-              <p className="text-stone-600 text-xs mt-0.5">
-                {currentIndex + 1} / {combatants.length}
-              </p>
+              <p className="text-stone-600 text-xs mt-0.5">{currentIndex + 1} / {combatants.length}</p>
             </div>
             {isAdmin && (
               <button onClick={next} className="p-2 rounded-lg text-stone-500 hover:text-amber-400 hover:bg-dungeon-800 transition-colors">
@@ -133,44 +166,73 @@ export function InitiativeTracker({ onBack }: Props) {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {combatants.map((c, i) => (
-              <div
-                key={c.id}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
-                  i === currentIndex
-                    ? 'border-amber-500 bg-amber-900/20 shadow-lg'
-                    : 'border-amber-900/30 bg-dungeon-800'
-                }`}
-              >
-                {/* Initiative number */}
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${
-                  i === currentIndex ? 'bg-amber-700 text-amber-100' : 'bg-dungeon-900 text-stone-400'
-                }`}>
-                  {c.initiative}
+            {combatants.map((c, i) => {
+              const isDead = !c.isPlayer && c.hp !== undefined && c.hp <= 0
+              return (
+                <div
+                  key={c.id}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+                    isDead ? 'opacity-40 border-stone-800 bg-dungeon-900' :
+                    i === currentIndex
+                      ? 'border-amber-500 bg-amber-900/20 shadow-lg'
+                      : 'border-amber-900/30 bg-dungeon-800'
+                  }`}
+                >
+                  {/* Initiative badge */}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${
+                    i === currentIndex && !isDead ? 'bg-amber-700 text-amber-100' : 'bg-dungeon-900 text-stone-400'
+                  }`}>
+                    {c.initiative}
+                  </div>
+
+                  {/* Color dot + name */}
+                  <span className="w-3 h-3 rounded-full shrink-0" style={{ background: c.color ?? '#888' }} />
+                  <p className={`font-semibold flex-1 truncate ${i === currentIndex && !isDead ? 'text-amber-300' : isDead ? 'text-stone-600 line-through' : 'text-stone-200'}`}
+                    style={{ fontFamily: 'Cinzel, serif' }}>
+                    {c.name}
+                  </p>
+
+                  {/* HP section — creatures only */}
+                  {!c.isPlayer && c.maxHp !== undefined && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Heart className={`w-3.5 h-3.5 ${hpColor(c.hp ?? 0, c.maxHp)}`} />
+                      {isAdmin ? (
+                        <>
+                          <button onClick={() => adjustHp(c.id, -5)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-red-400 hover:bg-red-950 transition-colors">-5</button>
+                          <button onClick={() => adjustHp(c.id, -1)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-red-400 hover:bg-red-950 transition-colors">-1</button>
+                          <input
+                            type="number"
+                            value={c.hp ?? 0}
+                            onChange={(e) => setHpDirect(c.id, Number(e.target.value))}
+                            className="w-12 text-center text-sm bg-dungeon-900 border border-amber-900/40 rounded px-1 py-0.5 text-stone-200 focus:outline-none focus:border-amber-600"
+                          />
+                          <span className={`text-xs ${hpColor(c.hp ?? 0, c.maxHp)}`}>/{c.maxHp}</span>
+                          <button onClick={() => adjustHp(c.id, 1)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-emerald-400 hover:bg-emerald-950 transition-colors">+1</button>
+                          <button onClick={() => adjustHp(c.id, 5)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-emerald-400 hover:bg-emerald-950 transition-colors">+5</button>
+                        </>
+                      ) : (
+                        <span className={`text-sm font-semibold ${hpColor(c.hp ?? 0, c.maxHp)}`}>
+                          {c.hp}/{c.maxHp}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {i === currentIndex && !isDead && (
+                    <span className="text-xs text-amber-500 font-semibold uppercase tracking-wider shrink-0">Active</span>
+                  )}
+                  {isDead && (
+                    <span className="text-xs text-stone-600 font-semibold uppercase tracking-wider shrink-0">Dead</span>
+                  )}
+
+                  {isAdmin && (
+                    <button onClick={() => remove(c.id)} className="text-stone-600 hover:text-red-400 transition-colors shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-
-                {/* Name + color dot */}
-                <span className="w-3 h-3 rounded-full shrink-0" style={{ background: c.color ?? '#888' }} />
-                <p className={`font-semibold flex-1 truncate ${i === currentIndex ? 'text-amber-300' : 'text-stone-200'}`}
-                  style={{ fontFamily: 'Cinzel, serif' }}>
-                  {c.name}
-                </p>
-
-                {/* Current turn badge */}
-                {i === currentIndex && (
-                  <span className="text-xs text-amber-500 font-semibold uppercase tracking-wider shrink-0">Active</span>
-                )}
-
-                {isAdmin && (
-                  <button
-                    onClick={() => remove(c.id)}
-                    className="text-stone-600 hover:text-red-400 transition-colors shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -196,9 +258,9 @@ export function InitiativeTracker({ onBack }: Props) {
               </div>
             )}
 
-            {/* Add custom combatant */}
+            {/* Add creature */}
             <div className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
-              <p className="text-stone-500 text-xs uppercase tracking-wider">Add combatant</p>
+              <p className="text-stone-500 text-xs uppercase tracking-wider">Add creature / NPC</p>
               <div className="flex gap-2">
                 <input
                   className="input-field flex-1"
@@ -213,18 +275,24 @@ export function InitiativeTracker({ onBack }: Props) {
                   type="number"
                   value={newInit}
                   onChange={(e) => setNewInit(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addCombatant()}
+                />
+                <input
+                  className="input-field w-20 text-center"
+                  placeholder="HP"
+                  type="number"
+                  value={newMaxHp}
+                  onChange={(e) => setNewMaxHp(e.target.value)}
                 />
                 <input
                   type="color"
                   value={newColor}
                   onChange={(e) => setNewColor(e.target.value)}
-                  className="w-10 h-10 rounded-lg border border-amber-900/60 bg-dungeon-900 cursor-pointer p-0.5"
+                  className="w-10 h-10 rounded-lg border border-amber-900/60 bg-dungeon-900 cursor-pointer p-0.5 shrink-0"
                 />
                 <button
                   onClick={addCombatant}
                   disabled={!newName.trim() || newInit === ''}
-                  className="p-2 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg transition-colors disabled:opacity-40"
+                  className="p-2 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg transition-colors disabled:opacity-40 shrink-0"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
