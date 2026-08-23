@@ -103,9 +103,9 @@ export function InitiativeTracker({ onBack }: Props) {
 
   function hpColor(hp: number, maxHp: number) {
     const pct = hp / maxHp
-    if (pct <= 0) return 'text-stone-600'
+    if (pct <= 0) return 'text-prose-600'
     if (pct <= 0.25) return 'text-red-400'
-    if (pct <= 0.5) return 'text-amber-400'
+    if (pct <= 0.5) return 'text-theme-400'
     return 'text-emerald-400'
   }
 
@@ -115,17 +115,17 @@ export function InitiativeTracker({ onBack }: Props) {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="text-stone-500 hover:text-amber-400 transition-colors">
+          <button onClick={onBack} className="text-prose-500 hover:text-theme-400 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <Sword className="w-5 h-5 text-amber-500" />
-            <h2 className="text-2xl font-bold text-amber-400" style={{ fontFamily: 'Cinzel, serif' }}>
+            <Sword className="w-5 h-5 text-theme-500" />
+            <h2 className="text-2xl font-bold text-theme-400" style={{ fontFamily: 'Cinzel, serif' }}>
               Initiative Tracker
             </h2>
           </div>
           {isAdmin && combatants.length > 0 && (
-            <button onClick={reset} className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-red-400 transition-colors">
+            <button onClick={reset} className="flex items-center gap-1.5 text-xs text-prose-500 hover:text-red-400 transition-colors">
               <RotateCcw className="w-3.5 h-3.5" />
               Reset
             </button>
@@ -136,22 +136,22 @@ export function InitiativeTracker({ onBack }: Props) {
         {combatants.length > 0 && (
           <div className="flex items-center justify-center gap-4">
             {isAdmin && (
-              <button onClick={prev} className="p-2 rounded-lg text-stone-500 hover:text-amber-400 hover:bg-dungeon-800 transition-colors">
+              <button onClick={prev} className="p-2 rounded-lg text-prose-500 hover:text-theme-400 hover:bg-dungeon-800 transition-colors">
                 <ChevronLeft className="w-6 h-6" />
               </button>
             )}
             <div className="text-center">
-              <p className="text-stone-500 text-xs uppercase tracking-wider mb-0.5">Current Turn</p>
+              <p className="text-prose-500 text-xs uppercase tracking-wider mb-0.5">Current Turn</p>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ background: combatants[currentIndex]?.color ?? '#888' }} />
-                <p className="text-amber-300 font-bold text-xl" style={{ fontFamily: 'Cinzel, serif' }}>
+                <p className="text-theme-300 font-bold text-xl" style={{ fontFamily: 'Cinzel, serif' }}>
                   {combatants[currentIndex]?.name}
                 </p>
               </div>
-              <p className="text-stone-600 text-xs mt-0.5">{currentIndex + 1} / {combatants.length}</p>
+              <p className="text-prose-600 text-xs mt-0.5">{currentIndex + 1} / {combatants.length}</p>
             </div>
             {isAdmin && (
-              <button onClick={next} className="p-2 rounded-lg text-stone-500 hover:text-amber-400 hover:bg-dungeon-800 transition-colors">
+              <button onClick={next} className="p-2 rounded-lg text-prose-500 hover:text-theme-400 hover:bg-dungeon-800 transition-colors">
                 <ChevronRight className="w-6 h-6" />
               </button>
             )}
@@ -161,8 +161,8 @@ export function InitiativeTracker({ onBack }: Props) {
         {/* Combatant list */}
         {combatants.length === 0 ? (
           <div className="text-center py-12">
-            <Sword className="w-10 h-10 text-stone-700 mx-auto mb-3" />
-            <p className="text-stone-600 text-sm italic">No combatants yet. Roll for initiative!</p>
+            <Sword className="w-10 h-10 text-prose-700 mx-auto mb-3" />
+            <p className="text-prose-600 text-sm italic">No combatants yet. Roll for initiative!</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -172,22 +172,22 @@ export function InitiativeTracker({ onBack }: Props) {
                 <div
                   key={c.id}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
-                    isDead ? 'opacity-40 border-stone-800 bg-dungeon-900' :
+                    isDead ? 'opacity-40 border-prose-800 bg-dungeon-900' :
                     i === currentIndex
-                      ? 'border-amber-500 bg-amber-900/20 shadow-lg'
-                      : 'border-amber-900/30 bg-dungeon-800'
+                      ? 'border-theme-500 bg-theme-900/20 shadow-lg'
+                      : 'border-theme-900/30 bg-dungeon-800'
                   }`}
                 >
                   {/* Initiative badge */}
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${
-                    i === currentIndex && !isDead ? 'bg-amber-700 text-amber-100' : 'bg-dungeon-900 text-stone-400'
+                    i === currentIndex && !isDead ? 'bg-theme-700 text-theme-100' : 'bg-dungeon-900 text-prose-400'
                   }`}>
                     {c.initiative}
                   </div>
 
                   {/* Color dot + name */}
                   <span className="w-3 h-3 rounded-full shrink-0" style={{ background: c.color ?? '#888' }} />
-                  <p className={`font-semibold flex-1 truncate ${i === currentIndex && !isDead ? 'text-amber-300' : isDead ? 'text-stone-600 line-through' : 'text-stone-200'}`}
+                  <p className={`font-semibold flex-1 truncate ${i === currentIndex && !isDead ? 'text-theme-300' : isDead ? 'text-prose-600 line-through' : 'text-prose-200'}`}
                     style={{ fontFamily: 'Cinzel, serif' }}>
                     {c.name}
                   </p>
@@ -198,17 +198,17 @@ export function InitiativeTracker({ onBack }: Props) {
                       <Heart className={`w-3.5 h-3.5 ${hpColor(c.hp ?? 0, c.maxHp)}`} />
                       {isAdmin ? (
                         <>
-                          <button onClick={() => adjustHp(c.id, -5)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-red-400 hover:bg-red-950 transition-colors">-5</button>
-                          <button onClick={() => adjustHp(c.id, -1)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-red-400 hover:bg-red-950 transition-colors">-1</button>
+                          <button onClick={() => adjustHp(c.id, -5)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-prose-400 hover:text-red-400 hover:bg-red-950 transition-colors">-5</button>
+                          <button onClick={() => adjustHp(c.id, -1)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-prose-400 hover:text-red-400 hover:bg-red-950 transition-colors">-1</button>
                           <input
                             type="number"
                             value={c.hp ?? 0}
                             onChange={(e) => setHpDirect(c.id, Number(e.target.value))}
-                            className="w-12 text-center text-sm bg-dungeon-900 border border-amber-900/40 rounded px-1 py-0.5 text-stone-200 focus:outline-none focus:border-amber-600"
+                            className="w-12 text-center text-sm bg-dungeon-900 border border-theme-900/40 rounded px-1 py-0.5 text-prose-200 focus:outline-none focus:border-theme-600"
                           />
                           <span className={`text-xs ${hpColor(c.hp ?? 0, c.maxHp)}`}>/{c.maxHp}</span>
-                          <button onClick={() => adjustHp(c.id, 1)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-emerald-400 hover:bg-emerald-950 transition-colors">+1</button>
-                          <button onClick={() => adjustHp(c.id, 5)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-stone-400 hover:text-emerald-400 hover:bg-emerald-950 transition-colors">+5</button>
+                          <button onClick={() => adjustHp(c.id, 1)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-prose-400 hover:text-emerald-400 hover:bg-emerald-950 transition-colors">+1</button>
+                          <button onClick={() => adjustHp(c.id, 5)} className="text-xs px-1.5 py-0.5 rounded bg-dungeon-900 text-prose-400 hover:text-emerald-400 hover:bg-emerald-950 transition-colors">+5</button>
                         </>
                       ) : (
                         <span className={`text-sm font-semibold ${hpColor(c.hp ?? 0, c.maxHp)}`}>
@@ -219,14 +219,14 @@ export function InitiativeTracker({ onBack }: Props) {
                   )}
 
                   {i === currentIndex && !isDead && (
-                    <span className="text-xs text-amber-500 font-semibold uppercase tracking-wider shrink-0">Active</span>
+                    <span className="text-xs text-theme-500 font-semibold uppercase tracking-wider shrink-0">Active</span>
                   )}
                   {isDead && (
-                    <span className="text-xs text-stone-600 font-semibold uppercase tracking-wider shrink-0">Dead</span>
+                    <span className="text-xs text-prose-600 font-semibold uppercase tracking-wider shrink-0">Dead</span>
                   )}
 
                   {isAdmin && (
-                    <button onClick={() => remove(c.id)} className="text-stone-600 hover:text-red-400 transition-colors shrink-0">
+                    <button onClick={() => remove(c.id)} className="text-prose-600 hover:text-red-400 transition-colors shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -241,17 +241,17 @@ export function InitiativeTracker({ onBack }: Props) {
           <div className="flex flex-col gap-4">
             {/* Quick-add players */}
             {availablePlayers.length > 0 && (
-              <div className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4">
-                <p className="text-stone-500 text-xs uppercase tracking-wider mb-3">Quick-add player</p>
+              <div className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4">
+                <p className="text-prose-500 text-xs uppercase tracking-wider mb-3">Quick-add player</p>
                 <div className="flex flex-wrap gap-2">
                   {availablePlayers.map((p) => (
                     <button
                       key={p.id}
                       onClick={() => addPlayer(p)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-900/40 hover:border-amber-600 hover:bg-dungeon-700 transition-colors text-sm"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-theme-900/40 hover:border-theme-600 hover:bg-dungeon-700 transition-colors text-sm"
                     >
                       <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} />
-                      <span className="text-stone-300">{p.characterName}</span>
+                      <span className="text-prose-300">{p.characterName}</span>
                     </button>
                   ))}
                 </div>
@@ -259,8 +259,8 @@ export function InitiativeTracker({ onBack }: Props) {
             )}
 
             {/* Add creature */}
-            <div className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
-              <p className="text-stone-500 text-xs uppercase tracking-wider">Add creature / NPC</p>
+            <div className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-4 flex flex-col gap-3">
+              <p className="text-prose-500 text-xs uppercase tracking-wider">Add creature / NPC</p>
               <div className="flex gap-2">
                 <input
                   className="input-field flex-1"
@@ -287,12 +287,12 @@ export function InitiativeTracker({ onBack }: Props) {
                   type="color"
                   value={newColor}
                   onChange={(e) => setNewColor(e.target.value)}
-                  className="w-10 h-10 rounded-lg border border-amber-900/60 bg-dungeon-900 cursor-pointer p-0.5 shrink-0"
+                  className="w-10 h-10 rounded-lg border border-theme-900/60 bg-dungeon-900 cursor-pointer p-0.5 shrink-0"
                 />
                 <button
                   onClick={addCombatant}
                   disabled={!newName.trim() || newInit === ''}
-                  className="p-2 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg transition-colors disabled:opacity-40 shrink-0"
+                  className="p-2 bg-theme-700 hover:bg-theme-600 text-theme-100 rounded-lg transition-colors disabled:opacity-40 shrink-0"
                 >
                   <Plus className="w-5 h-5" />
                 </button>

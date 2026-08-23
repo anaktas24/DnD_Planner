@@ -39,6 +39,9 @@ export default function App() {
           localStorage.setItem(PLAYER_ID_KEY, user.uid)
           setPlayerId(user.uid)
           setActivePlayer(user.uid)
+          // Apply the player's saved theme
+          const playerTheme = snap.data()?.theme ?? 'dungeon'
+          document.documentElement.setAttribute('data-theme', playerTheme)
         } else {
           setPlayerId(null) // needs character creation
         }

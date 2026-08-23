@@ -77,15 +77,15 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
 
   return (
     <div className="min-h-screen bg-dungeon-900 overflow-y-auto flex items-start justify-center p-4">
-      <div className="bg-dungeon-800 border border-amber-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-5 my-auto">
+      <div className="bg-dungeon-800 border border-theme-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-5 my-auto">
 
         {/* Header */}
         <div className="text-center">
-          <Sword className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-          <h1 className="text-2xl font-bold text-amber-400" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
+          <Sword className="w-12 h-12 text-theme-500 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold text-theme-400" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
             DnD Planner
           </h1>
-          <p className="text-stone-500 text-sm mt-1">
+          <p className="text-prose-500 text-sm mt-1">
             {firebaseUser ? 'Create your character' : 'Sign in to join the campaign'}
           </p>
         </div>
@@ -119,8 +119,8 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
                 <img src={firebaseUser.photoURL} className="w-8 h-8 rounded-full" alt="" />
               )}
               <div className="min-w-0">
-                <p className="text-stone-200 text-sm font-medium truncate">{firebaseUser.displayName}</p>
-                <p className="text-stone-500 text-xs truncate">{firebaseUser.email}</p>
+                <p className="text-prose-200 text-sm font-medium truncate">{firebaseUser.displayName}</p>
+                <p className="text-prose-500 text-xs truncate">{firebaseUser.email}</p>
               </div>
             </div>
 
@@ -150,9 +150,9 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
             <div>
               <button
                 onClick={() => setShowColorPicker((v) => !v)}
-                className="flex items-center gap-2 text-stone-500 text-xs hover:text-stone-300 transition-colors"
+                className="flex items-center gap-2 text-prose-500 text-xs hover:text-prose-300 transition-colors"
               >
-                <span className="w-4 h-4 rounded-full border border-stone-600" style={{ background: form.color }} />
+                <span className="w-4 h-4 rounded-full border border-prose-600" style={{ background: form.color }} />
                 Pick your colour
                 {showColorPicker ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>

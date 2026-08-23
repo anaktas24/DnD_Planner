@@ -23,13 +23,13 @@ export function SetupScreen() {
 
   return (
     <div className="min-h-screen bg-dungeon-900 flex items-center justify-center p-6">
-      <div className="bg-dungeon-800 border border-amber-800 rounded-2xl p-8 w-full max-w-sm shadow-2xl flex flex-col gap-5">
+      <div className="bg-dungeon-800 border border-theme-800 rounded-2xl p-8 w-full max-w-sm shadow-2xl flex flex-col gap-5">
         <div className="text-center">
-          <Sword className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-          <h1 className="text-2xl font-bold text-amber-400" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
+          <Sword className="w-12 h-12 text-theme-500 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold text-theme-400" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
             DnD Planner
           </h1>
-          <p className="text-stone-500 text-sm mt-1">Begin your campaign</p>
+          <p className="text-prose-500 text-sm mt-1">Begin your campaign</p>
         </div>
 
         <input

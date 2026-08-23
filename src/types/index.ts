@@ -1,6 +1,7 @@
 export interface Player {
   id: string
   name: string
+  theme?: 'dungeon' | 'parchment' | 'ocean' | 'fairy'
   characterName: string
   characterClass: string
   characterRace: string

@@ -57,18 +57,18 @@ export function StoryReader() {
   }
 
   return (
-    <div className="min-h-screen bg-dungeon-900 text-stone-200" style={{ fontFamily: 'IM Fell English, Georgia, serif' }}>
+    <div className="min-h-screen bg-dungeon-900 text-prose-200" style={{ fontFamily: 'IM Fell English, Georgia, serif' }}>
       {/* Header */}
-      <header className="border-b border-amber-800/50 bg-dungeon-900/95 sticky top-0 z-10 backdrop-blur-sm">
+      <header className="border-b border-theme-800/50 bg-dungeon-900/95 sticky top-0 z-10 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <D20Icon className="w-6 h-6 text-amber-500" />
+            <D20Icon className="w-6 h-6 text-theme-500" />
             <div>
-              <h1 className="text-amber-400 font-bold text-lg leading-none" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
+              <h1 className="text-theme-400 font-bold text-lg leading-none" style={{ fontFamily: 'Cinzel Decorative, serif' }}>
                 The Story So Far
               </h1>
               {campaign?.name && (
-                <p className="text-stone-500 text-xs mt-0.5" style={{ fontFamily: 'Cinzel, serif' }}>
+                <p className="text-prose-500 text-xs mt-0.5" style={{ fontFamily: 'Cinzel, serif' }}>
                   {campaign.name}
                 </p>
               )}
@@ -78,7 +78,7 @@ export function StoryReader() {
             {canWrite && !editing && (
               <button
                 onClick={() => setEditing({ title: '', content: '' })}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-theme-700 text-theme-400 hover:bg-theme-900/30 rounded-lg transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 New Entry
@@ -86,7 +86,7 @@ export function StoryReader() {
             )}
             <button
               onClick={goBack}
-              className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-amber-400 transition-colors px-2 py-1.5"
+              className="flex items-center gap-1.5 text-sm text-prose-500 hover:text-theme-400 transition-colors px-2 py-1.5"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
@@ -98,36 +98,36 @@ export function StoryReader() {
       <main className="max-w-3xl mx-auto px-4 py-10">
         {/* Editor */}
         {editing && (
-          <div className="bg-dungeon-800 border border-amber-800 rounded-xl p-5 mb-10 flex flex-col gap-3">
+          <div className="bg-dungeon-800 border border-theme-800 rounded-xl p-5 mb-10 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-amber-400 font-semibold text-sm uppercase tracking-wider" style={{ fontFamily: 'Cinzel, serif' }}>
+              <h3 className="text-theme-400 font-semibold text-sm uppercase tracking-wider" style={{ fontFamily: 'Cinzel, serif' }}>
                 {editing.id ? 'Edit Entry' : 'New Entry'}
               </h3>
               <button onClick={() => setEditing(null)}>
-                <X className="w-4 h-4 text-stone-500 hover:text-stone-300" />
+                <X className="w-4 h-4 text-prose-500 hover:text-prose-300" />
               </button>
             </div>
             <input
-              className="bg-dungeon-900 border border-amber-900/60 text-stone-200 rounded-lg px-3 py-2 text-base font-semibold placeholder-stone-600 focus:outline-none focus:border-amber-600 transition-colors w-full"
+              className="bg-dungeon-900 border border-theme-900/60 text-prose-200 rounded-lg px-3 py-2 text-base font-semibold placeholder-prose-600 focus:outline-none focus:border-theme-600 transition-colors w-full"
               placeholder="Title..."
               value={editing.title ?? ''}
               onChange={(e) => setEditing((f) => ({ ...f, title: e.target.value }))}
             />
             <textarea
-              className="bg-dungeon-900 border border-amber-900/60 text-stone-200 rounded-lg px-3 py-2 text-sm placeholder-stone-600 focus:outline-none focus:border-amber-600 transition-colors w-full resize-none leading-relaxed"
+              className="bg-dungeon-900 border border-theme-900/60 text-prose-200 rounded-lg px-3 py-2 text-sm placeholder-prose-600 focus:outline-none focus:border-theme-600 transition-colors w-full resize-none leading-relaxed"
               rows={12}
               placeholder="Write your session recap here..."
               value={editing.content ?? ''}
               onChange={(e) => setEditing((f) => ({ ...f, content: e.target.value }))}
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditing(null)} className="text-stone-500 hover:text-stone-300 text-sm px-3 py-1.5">
+              <button onClick={() => setEditing(null)} className="text-prose-500 hover:text-prose-300 text-sm px-3 py-1.5">
                 Cancel
               </button>
               <button
                 onClick={save}
                 disabled={saving || !editing.title?.trim() || !editing.content?.trim()}
-                className="flex items-center gap-2 bg-amber-700 hover:bg-amber-600 text-amber-100 font-semibold rounded-lg px-4 py-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-theme-700 hover:bg-theme-600 text-theme-100 font-semibold rounded-lg px-4 py-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Publish'}
@@ -138,7 +138,7 @@ export function StoryReader() {
 
         {posts.length === 0 && !editing && (
           <div className="text-center py-24">
-            <p className="text-stone-600 italic text-lg">The tale has not yet been written...</p>
+            <p className="text-prose-600 italic text-lg">The tale has not yet been written...</p>
           </div>
         )}
 
@@ -148,38 +148,38 @@ export function StoryReader() {
               {/* Ornamental divider between entries */}
               {i > 0 && (
                 <div className="flex items-center gap-4 mb-16">
-                  <div className="flex-1 h-px bg-amber-900/40" />
-                  <span className="text-amber-800 text-lg">⬡</span>
-                  <div className="flex-1 h-px bg-amber-900/40" />
+                  <div className="flex-1 h-px bg-theme-900/40" />
+                  <span className="text-theme-800 text-lg">⬡</span>
+                  <div className="flex-1 h-px bg-theme-900/40" />
                 </div>
               )}
 
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h2
-                    className="text-amber-300 font-bold text-2xl md:text-3xl leading-tight"
+                    className="text-theme-300 font-bold text-2xl md:text-3xl leading-tight"
                     style={{ fontFamily: 'Cinzel, serif' }}
                   >
                     {post.title}
                   </h2>
-                  <p className="text-stone-600 text-sm mt-2" style={{ fontFamily: 'Cinzel, serif' }}>
+                  <p className="text-prose-600 text-sm mt-2" style={{ fontFamily: 'Cinzel, serif' }}>
                     {format(parseISO(post.createdAt), 'MMMM d, yyyy')}
-                    <span className="mx-2 text-stone-700">·</span>
+                    <span className="mx-2 text-prose-700">·</span>
                     {post.authorName}
-                    {post.updatedAt !== post.createdAt && <span className="text-stone-700"> · edited</span>}
+                    {post.updatedAt !== post.createdAt && <span className="text-prose-700"> · edited</span>}
                   </p>
                 </div>
                 {canWrite && (
                   <div className="flex gap-1 shrink-0 mt-1">
                     <button
                       onClick={() => setEditing({ ...post })}
-                      className="p-1.5 text-stone-600 hover:text-amber-400 transition-colors"
+                      className="p-1.5 text-prose-600 hover:text-theme-400 transition-colors"
                     >
                       <PenLine className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => remove(post.id)}
-                      className="p-1.5 text-stone-600 hover:text-red-400 transition-colors"
+                      className="p-1.5 text-prose-600 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -187,7 +187,7 @@ export function StoryReader() {
                 )}
               </div>
 
-              <p className="text-stone-300 leading-8 text-base md:text-lg whitespace-pre-wrap">
+              <p className="text-prose-300 leading-8 text-base md:text-lg whitespace-pre-wrap">
                 {post.content}
               </p>
             </article>

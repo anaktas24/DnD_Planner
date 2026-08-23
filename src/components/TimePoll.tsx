@@ -60,10 +60,10 @@ export function TimePoll() {
   }
 
   return (
-    <div className="mx-3 md:mx-6 mb-4 bg-dungeon-800 border border-amber-700/50 rounded-xl p-4">
+    <div className="mx-3 md:mx-6 mb-4 bg-dungeon-800 border border-theme-700/50 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-1">
-        <Clock className="w-4 h-4 text-amber-500" />
-        <p className="text-amber-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
+        <Clock className="w-4 h-4 text-theme-500" />
+        <p className="text-theme-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
           What time on {format(parseISO(nextDate), 'MMM d')}?
         </p>
       </div>
@@ -79,7 +79,7 @@ export function TimePoll() {
           <button
             onClick={addTime}
             disabled={!newTime || !!timeVotes[newTime]}
-            className="flex items-center gap-1 text-xs px-2 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors disabled:opacity-40"
+            className="flex items-center gap-1 text-xs px-2 py-1.5 border border-theme-700 text-theme-400 hover:bg-theme-900/30 rounded-lg transition-colors disabled:opacity-40"
           >
             <Plus className="w-3.5 h-3.5" /> Add option
           </button>
@@ -87,7 +87,7 @@ export function TimePoll() {
       )}
 
       {proposedTimes.length === 0 ? (
-        <p className="text-stone-500 text-sm italic">No time options yet — add some above.</p>
+        <p className="text-prose-500 text-sm italic">No time options yet — add some above.</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {proposedTimes.sort().map((t) => {
@@ -101,13 +101,13 @@ export function TimePoll() {
                     className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${
                       myVoteIsHere
                         ? 'bg-emerald-800/50 border-emerald-500 text-emerald-300'
-                        : 'bg-dungeon-900 border-amber-900/40 text-stone-300 hover:border-amber-600'
+                        : 'bg-dungeon-900 border-theme-900/40 text-prose-300 hover:border-theme-600'
                     }`}
                   >
                     {t}
                   </button>
                   {isAdmin && (
-                    <button onClick={() => removeTime(t)} className="text-stone-600 hover:text-red-400 transition-colors">
+                    <button onClick={() => removeTime(t)} className="text-prose-600 hover:text-red-400 transition-colors">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -118,7 +118,7 @@ export function TimePoll() {
                     return p ? <span key={pid} className="w-2 h-2 rounded-full" style={{ background: p.color }} title={p.characterName} /> : null
                   })}
                 </div>
-                <span className="text-stone-600 text-xs">{voters.length}/{players.length}</span>
+                <span className="text-prose-600 text-xs">{voters.length}/{players.length}</span>
               </div>
             )
           })}

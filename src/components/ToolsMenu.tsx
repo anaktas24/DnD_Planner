@@ -130,14 +130,14 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       <div className="relative" ref={ref}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className={`p-2 rounded-lg transition-colors ${open ? 'bg-amber-900/40 text-amber-400' : 'text-stone-500 hover:text-amber-400'}`}
+          className={`p-2 rounded-lg transition-colors ${open ? 'bg-theme-900/40 text-theme-400' : 'text-prose-500 hover:text-theme-400'}`}
           title="Tools"
         >
           <Settings className="w-5 h-5" />
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-64 bg-dungeon-800 border border-amber-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 w-64 bg-dungeon-800 border border-theme-800 rounded-xl shadow-2xl z-50 overflow-hidden">
             {items.map((item) => (
               <button
                 key={item.label}
@@ -146,10 +146,10 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors disabled:opacity-30 disabled:cursor-not-allowed
                   ${item.danger ? 'hover:bg-red-900/30' : 'hover:bg-dungeon-700'}`}
               >
-                <item.icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-red-500' : 'text-amber-600'}`} />
+                <item.icon className={`w-4 h-4 shrink-0 ${item.danger ? 'text-red-500' : 'text-theme-600'}`} />
                 <div>
-                  <p className={`text-sm font-medium ${item.danger ? 'text-red-400' : 'text-stone-200'}`}>{item.label}</p>
-                  <p className="text-stone-600 text-xs">{item.sublabel}</p>
+                  <p className={`text-sm font-medium ${item.danger ? 'text-red-400' : 'text-prose-200'}`}>{item.label}</p>
+                  <p className="text-prose-600 text-xs">{item.sublabel}</p>
                 </div>
               </button>
             ))}
@@ -161,24 +161,24 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       {/* Session history modal */}
       {historyOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setHistoryOpen(false)}>
-          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-md mx-4 p-5 shadow-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dungeon-900 border border-theme-800 rounded-xl w-full max-w-md mx-4 p-5 shadow-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Session History</h3>
-              <button onClick={() => setHistoryOpen(false)} className="text-stone-500 hover:text-stone-300">✕</button>
+              <h3 className="text-theme-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Session History</h3>
+              <button onClick={() => setHistoryOpen(false)} className="text-prose-500 hover:text-prose-300">✕</button>
             </div>
             {notes.length === 0 ? (
-              <p className="text-stone-600 text-sm italic">No sessions logged yet.</p>
+              <p className="text-prose-600 text-sm italic">No sessions logged yet.</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {[...notes].sort((a, b) => b.sessionNumber - a.sessionNumber).map((n) => (
-                  <div key={n.id} className="bg-dungeon-800 rounded-lg p-3 border border-amber-900/30">
+                  <div key={n.id} className="bg-dungeon-800 rounded-lg p-3 border border-theme-900/30">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-amber-500 font-semibold text-xs uppercase tracking-wider">Session #{n.sessionNumber}</span>
-                      <span className="text-stone-600 text-xs">{format(parseISO(n.date), 'MMM d, yyyy')}</span>
+                      <span className="text-theme-500 font-semibold text-xs uppercase tracking-wider">Session #{n.sessionNumber}</span>
+                      <span className="text-prose-600 text-xs">{format(parseISO(n.date), 'MMM d, yyyy')}</span>
                     </div>
-                    {n.summary && <p className="text-stone-300 text-sm mb-1">{n.summary}</p>}
-                    {n.location && <p className="text-stone-500 text-xs">📍 {n.location}</p>}
-                    {n.nextLocation && <p className="text-stone-500 text-xs">➡️ Next: {n.nextLocation}</p>}
+                    {n.summary && <p className="text-prose-300 text-sm mb-1">{n.summary}</p>}
+                    {n.location && <p className="text-prose-500 text-xs">📍 {n.location}</p>}
+                    {n.nextLocation && <p className="text-prose-500 text-xs">➡️ Next: {n.nextLocation}</p>}
                   </div>
                 ))}
               </div>
@@ -227,10 +227,10 @@ export function ProfileButton() {
     '#FFFFFF',             // white
   ]
 
-  const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0] })
+  const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0], theme: me?.theme ?? 'dungeon' })
 
   useEffect(() => {
-    if (me) setForm({ name: me.name, characterName: me.characterName, characterClass: me.characterClass, characterRace: me.characterRace, color: me.color })
+    if (me) setForm({ name: me.name, characterName: me.characterName, characterClass: me.characterClass, characterRace: me.characterRace, color: me.color, theme: me.theme ?? 'dungeon' })
   }, [me?.id])
 
   async function save() {
@@ -239,6 +239,8 @@ export function ProfileButton() {
       ? { ...me, ...form, characterClass: 'Dungeon Master', characterRace: '' }
       : { ...me, ...form }
     await upsertPlayer(saveData)
+    // Apply theme immediately without waiting for Firestore sync
+    document.documentElement.setAttribute('data-theme', form.theme)
     setOpen(false)
   }
 
@@ -265,23 +267,23 @@ export function ProfileButton() {
         className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-dungeon-800 transition-colors"
         title="Your character"
       >
-        <span className="w-6 h-6 rounded-full border-2 border-amber-700" style={{ background: me.color }} />
-        <span className="hidden sm:inline text-stone-400 text-sm">{me.characterName}</span>
+        <span className="w-6 h-6 rounded-full border-2 border-theme-700" style={{ background: me.color }} />
+        <span className="hidden sm:inline text-prose-400 text-sm">{me.characterName}</span>
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setOpen(false)}>
-          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-sm mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dungeon-900 border border-theme-800 rounded-xl w-full max-w-sm mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Edit Character</h3>
-              <button onClick={() => setOpen(false)} className="text-stone-500 hover:text-stone-300">✕</button>
+              <h3 className="text-theme-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Edit Character</h3>
+              <button onClick={() => setOpen(false)} className="text-prose-500 hover:text-prose-300">✕</button>
             </div>
             <input className="input-field" placeholder="Your name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             <input className="input-field" placeholder="Character name" value={form.characterName} onChange={(e) => setForm((f) => ({ ...f, characterName: e.target.value }))} />
             {isAdmin ? (
-              <div className="flex items-center gap-2 px-3 py-2 bg-dungeon-900/60 rounded-lg border border-amber-900/40">
-                <Crown className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="text-amber-400 font-semibold text-sm">Dungeon Master</span>
+              <div className="flex items-center gap-2 px-3 py-2 bg-dungeon-900/60 rounded-lg border border-theme-900/40">
+                <Crown className="w-4 h-4 text-theme-500 shrink-0" />
+                <span className="text-theme-400 font-semibold text-sm">Dungeon Master</span>
               </div>
             ) : (
               <>
@@ -294,7 +296,7 @@ export function ProfileButton() {
               </>
             )}
             <div>
-              <p className="text-stone-500 text-xs mb-2">Colour</p>
+              <p className="text-prose-500 text-xs mb-2">Colour</p>
               <div className="flex gap-2 flex-wrap">
                 {COLOR_PRESETS.map((c) => (
                   <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))} className="w-7 h-7 rounded-full transition-transform hover:scale-110"
@@ -302,12 +304,39 @@ export function ProfileButton() {
                 ))}
               </div>
             </div>
+            {/* Theme picker */}
+            <div>
+              <p className="text-prose-500 text-xs mb-2">Theme</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { id: 'dungeon', label: 'Dark Dungeon', bg: '#0f0c09', accent: '#d97706' },
+                  { id: 'parchment', label: 'Parchment', bg: '#f8ead4', accent: '#643a10' },
+                  { id: 'ocean', label: 'Ocean', bg: '#020a1c', accent: '#0280aa' },
+                  { id: 'fairy', label: 'Bard / Fairy', bg: '#0c0418', accent: '#8424d2' },
+                ] as const).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setForm((f) => ({ ...f, theme: t.id }))}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                      form.theme === t.id
+                        ? 'border-white/40 ring-1 ring-white/30'
+                        : 'border-transparent hover:border-white/20'
+                    }`}
+                    style={{ background: t.bg, color: t.accent }}
+                  >
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ background: t.accent }} />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button onClick={save} className="btn-primary mt-1">Save</button>
 
             {canBecomeAdmin && (
               <button
                 onClick={() => { setOpen(false); setClaimOpen(true) }}
-                className="flex items-center justify-center gap-2 text-amber-600 hover:text-amber-400 transition-colors text-sm py-1 border-t border-amber-900/30 pt-3"
+                className="flex items-center justify-center gap-2 text-theme-600 hover:text-theme-400 transition-colors text-sm py-1 border-t border-theme-900/30 pt-3"
               >
                 <Crown className="w-4 h-4" />
                 Become Admin
@@ -316,7 +345,7 @@ export function ProfileButton() {
 
             <button
               onClick={() => signOutUser()}
-              className="flex items-center justify-center gap-2 text-stone-500 hover:text-red-400 transition-colors text-sm py-1"
+              className="flex items-center justify-center gap-2 text-prose-500 hover:text-red-400 transition-colors text-sm py-1"
             >
               <LogOut className="w-4 h-4" />
               Log out
@@ -328,14 +357,14 @@ export function ProfileButton() {
       {/* Become Admin modal */}
       {claimOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => { setClaimOpen(false); setPinInput(''); setClaimError('') }}>
-          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-xs mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dungeon-900 border border-theme-800 rounded-xl w-full max-w-xs mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-500" />
-              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Claim Admin</h3>
+              <Crown className="w-5 h-5 text-theme-500" />
+              <h3 className="text-theme-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Claim Admin</h3>
             </div>
             {hasPIN ? (
               <>
-                <p className="text-stone-500 text-sm">Enter the admin access code.</p>
+                <p className="text-prose-500 text-sm">Enter the admin access code.</p>
                 <input
                   className="input-field tracking-widest"
                   placeholder="Access code"
@@ -346,18 +375,18 @@ export function ProfileButton() {
                 />
               </>
             ) : (
-              <p className="text-stone-500 text-sm">No admin exists yet. Claim admin for this campaign?</p>
+              <p className="text-prose-500 text-sm">No admin exists yet. Claim admin for this campaign?</p>
             )}
             {claimError && <p className="text-red-400 text-xs">{claimError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={handleClaim}
                 disabled={claiming || (hasPIN && !pinInput.trim())}
-                className="flex-1 bg-amber-700 hover:bg-amber-600 text-amber-100 font-semibold rounded-lg px-4 py-2 transition-colors text-sm disabled:opacity-50"
+                className="flex-1 bg-theme-700 hover:bg-theme-600 text-theme-100 font-semibold rounded-lg px-4 py-2 transition-colors text-sm disabled:opacity-50"
               >
                 {claiming ? 'Claiming...' : 'Claim Admin'}
               </button>
-              <button onClick={() => { setClaimOpen(false); setPinInput(''); setClaimError('') }} className="text-stone-500 hover:text-stone-300 text-sm px-3">
+              <button onClick={() => { setClaimOpen(false); setPinInput(''); setClaimError('') }} className="text-prose-500 hover:text-prose-300 text-sm px-3">
                 Cancel
               </button>
             </div>

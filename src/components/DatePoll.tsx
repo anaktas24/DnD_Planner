@@ -40,20 +40,20 @@ export function DatePoll() {
   }
 
   return (
-    <div className="mx-3 md:mx-6 mb-4 bg-amber-900/20 border border-amber-700/50 rounded-xl p-4">
+    <div className="mx-3 md:mx-6 mb-4 bg-theme-900/20 border border-theme-700/50 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
         {isMultiple ? (
-          <Vote className="w-4 h-4 text-amber-500" />
+          <Vote className="w-4 h-4 text-theme-500" />
         ) : (
-          <CalendarCheck className="w-4 h-4 text-amber-500" />
+          <CalendarCheck className="w-4 h-4 text-theme-500" />
         )}
-        <p className="text-amber-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
+        <p className="text-theme-400 font-semibold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
           {isMultiple ? 'Multiple dates available — vote for one when all have picked the dates!' : 'We found a date!'}
         </p>
       </div>
 
       {!hasMarkedDates ? (
-        <p className="text-stone-500 text-sm italic">Mark your availability on the calendar before voting.</p>
+        <p className="text-prose-500 text-sm italic">Mark your availability on the calendar before voting.</p>
       ) : isMultiple ? (
         <>
           <div className="flex flex-col gap-2">
@@ -68,7 +68,7 @@ export function DatePoll() {
                   className={`flex items-center justify-between rounded-lg px-3 py-2 border transition-colors text-sm ${
                     myVoteIsHere
                       ? 'bg-emerald-800/50 border-emerald-500 text-emerald-300'
-                      : 'bg-dungeon-800 border-amber-900/40 text-stone-300 hover:border-amber-600'
+                      : 'bg-dungeon-800 border-theme-900/40 text-prose-300 hover:border-theme-600'
                   }`}
                 >
                   <span className="font-medium">{format(parseISO(date), 'EEE, MMM d')}</span>
@@ -81,13 +81,13 @@ export function DatePoll() {
                         ) : null
                       })}
                     </div>
-                    <span className="text-stone-500 text-xs">{dateVoters.length}/{players.length}</span>
+                    <span className="text-prose-500 text-xs">{dateVoters.length}/{players.length}</span>
                   </div>
                 </button>
               )
             })}
           </div>
-          <p className="text-amber-600 text-xs mt-2">Poll closes when everyone votes.</p>
+          <p className="text-theme-600 text-xs mt-2">Poll closes when everyone votes.</p>
         </>
       ) : (
         <div className="flex items-center justify-between">

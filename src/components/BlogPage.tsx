@@ -53,10 +53,10 @@ export function BlogPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-amber-400" style={{ fontFamily: 'Cinzel, serif' }}>
+            <h2 className="text-2xl font-bold text-theme-400" style={{ fontFamily: 'Cinzel, serif' }}>
               The Story So Far...
             </h2>
-            <p className="text-stone-500 text-sm mt-0.5">Chronicles of {campaign?.name}</p>
+            <p className="text-prose-500 text-sm mt-0.5">Chronicles of {campaign?.name}</p>
           </div>
           {canWrite && !editing && (
             <button onClick={startNew} className="btn-primary flex items-center gap-2">
@@ -68,12 +68,12 @@ export function BlogPage() {
 
         {/* Editor */}
         {editing && (
-          <div className="bg-dungeon-800 border border-amber-800 rounded-xl p-5 mb-6 flex flex-col gap-3">
+          <div className="bg-dungeon-800 border border-theme-800 rounded-xl p-5 mb-6 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-amber-400 font-semibold text-sm uppercase tracking-wider">
+              <h3 className="text-theme-400 font-semibold text-sm uppercase tracking-wider">
                 {editing.id ? 'Edit Entry' : 'New Entry'}
               </h3>
-              <button onClick={() => setEditing(null)}><X className="w-4 h-4 text-stone-500 hover:text-stone-300" /></button>
+              <button onClick={() => setEditing(null)}><X className="w-4 h-4 text-prose-500 hover:text-prose-300" /></button>
             </div>
             <input
               className="input-field text-base font-semibold"
@@ -89,7 +89,7 @@ export function BlogPage() {
               onChange={(e) => setEditing((f) => ({ ...f, content: e.target.value }))}
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditing(null)} className="text-stone-500 hover:text-stone-300 text-sm px-3 py-1.5">
+              <button onClick={() => setEditing(null)} className="text-prose-500 hover:text-prose-300 text-sm px-3 py-1.5">
                 Cancel
               </button>
               <button
@@ -107,19 +107,19 @@ export function BlogPage() {
         {/* Posts */}
         {blogPosts.length === 0 && !editing && (
           <div className="text-center py-16">
-            <p className="text-stone-600 text-sm italic">No entries yet. The tale has not been written...</p>
+            <p className="text-prose-600 text-sm italic">No entries yet. The tale has not been written...</p>
           </div>
         )}
 
         <div className="flex flex-col gap-6">
           {blogPosts.map((post) => (
-            <article key={post.id} className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-5">
+            <article key={post.id} className="bg-dungeon-800 border border-theme-900/30 rounded-xl p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <h3 className="text-amber-300 font-bold text-lg" style={{ fontFamily: 'Cinzel, serif' }}>
+                  <h3 className="text-theme-300 font-bold text-lg" style={{ fontFamily: 'Cinzel, serif' }}>
                     {post.title}
                   </h3>
-                  <p className="text-stone-600 text-xs mt-0.5">
+                  <p className="text-prose-600 text-xs mt-0.5">
                     By {post.authorName} · {format(parseISO(post.createdAt), 'MMM d, yyyy')}
                     {post.updatedAt !== post.createdAt && ' (edited)'}
                   </p>
@@ -128,20 +128,20 @@ export function BlogPage() {
                   <div className="flex gap-1 shrink-0">
                     <button
                       onClick={() => startEdit(post)}
-                      className="p-1.5 text-stone-600 hover:text-amber-400 transition-colors"
+                      className="p-1.5 text-prose-600 hover:text-theme-400 transition-colors"
                     >
                       <PenLine className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => remove(post.id)}
-                      className="p-1.5 text-stone-600 hover:text-red-400 transition-colors"
+                      className="p-1.5 text-prose-600 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 )}
               </div>
-              <p className="text-stone-300 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+              <p className="text-prose-300 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
             </article>
           ))}
         </div>
