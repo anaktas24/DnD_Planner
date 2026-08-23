@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
+import type { User } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
-import { db } from './lib/firebase'
+import { auth, db } from './lib/firebase'
 import { useFirestore } from './hooks/useFirestore'
 import { useCampaignStore } from './store/useCampaignStore'
 import { updateCampaign } from './lib/firestore'
@@ -18,16 +20,39 @@ export default function App() {
   useFirestore()
 
   const [ready, setReady] = useState(false)
-  const [playerId, setPlayerId] = useState<string | null>(
-    () => localStorage.getItem(PLAYER_ID_KEY)
-  )
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null)
+  const [playerId, setPlayerId] = useState<string | null>(null)
   const [rosterOpen, setRosterOpen] = useState(false)
   const [currentView, setCurrentView] = useState<View>('home')
 
+  const { setActivePlayer, campaign, players } = useCampaignStore()
+
+  // Firebase Auth — drives everything
   useEffect(() => {
-    const timeout = setTimeout(() => setReady(true), 8000)
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user)
+      if (user) {
+        // Check if this Google user already has a player doc
+        const snap = await getDoc(doc(db, 'campaigns', 'main', 'players', user.uid))
+        if (snap.exists()) {
+          localStorage.setItem(PLAYER_ID_KEY, user.uid)
+          setPlayerId(user.uid)
+          setActivePlayer(user.uid)
+        } else {
+          setPlayerId(null) // needs character creation
+        }
+      } else {
+        localStorage.removeItem(PLAYER_ID_KEY)
+        setPlayerId(null)
+      }
+      setReady(true)
+    })
+    return () => unsub()
+  }, [setActivePlayer])
+
+  // Ensure campaign doc exists
+  useEffect(() => {
     getDoc(doc(db, 'campaigns', 'main')).then((snap) => {
-      clearTimeout(timeout)
       if (!snap.exists()) {
         updateCampaign({
           id: 'main',
@@ -36,15 +61,10 @@ export default function App() {
           sessionCount: 0,
           nextSessionDate: null,
           createdAt: new Date().toISOString(),
-        }).then(() => setReady(true)).catch(() => setReady(true))
-      } else {
-        setReady(true)
+        })
       }
-    }).catch(() => { clearTimeout(timeout); setReady(true) })
-    return () => clearTimeout(timeout)
+    }).catch(() => {})
   }, [])
-
-  const { setActivePlayer, campaign, players } = useCampaignStore()
 
   function handleJoined(id: string) {
     localStorage.setItem(PLAYER_ID_KEY, id)
@@ -52,11 +72,7 @@ export default function App() {
     setActivePlayer(id)
   }
 
-  useEffect(() => {
-    if (playerId) setActivePlayer(playerId)
-  }, [playerId, setActivePlayer])
-
-  // If this player was kicked, clear their session and show JoinScreen
+  // If this player was kicked, send back to join screen
   useEffect(() => {
     if (!playerId || players.length === 0) return
     const stillExists = players.some((p) => p.id === playerId)
@@ -87,8 +103,8 @@ export default function App() {
     )
   }
 
-  if (!playerId) {
-    return <JoinScreen onJoined={handleJoined} />
+  if (!firebaseUser || !playerId) {
+    return <JoinScreen firebaseUser={firebaseUser} onJoined={handleJoined} />
   }
 
   return (
@@ -98,14 +114,12 @@ export default function App() {
         onNavigate={setCurrentView}
       />
 
-      {/* Pinned announcement */}
       {campaign?.pinnedAnnouncement && (
         <div className="bg-amber-900/30 border-b border-amber-700/50 px-4 py-2 text-amber-300 text-sm text-center">
           📌 {campaign.pinnedAnnouncement}
         </div>
       )}
 
-      {/* Session location */}
       {campaign?.sessionLocation && campaign?.nextSessionDate && (
         <div className="bg-dungeon-800 border-b border-amber-900/30 px-4 py-1.5 text-stone-400 text-xs text-center">
           📍 Session location: <span className="text-stone-300 font-medium">{campaign.sessionLocation}</span>

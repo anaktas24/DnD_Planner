@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearCurrentMonthUpToToday, deletePastDates, upsertPlayer, claimAdmin } from '../lib/firestore'
+import { signOutUser } from '../lib/firebase'
 
 type View = 'home' | 'blog' | 'admin'
 
@@ -395,7 +396,7 @@ export function ProfileButton() {
             )}
 
             <button
-              onClick={() => { localStorage.removeItem(PLAYER_ID_KEY); window.location.reload() }}
+              onClick={() => signOutUser()}
               className="flex items-center justify-center gap-2 text-stone-500 hover:text-red-400 transition-colors text-sm py-1"
             >
               <LogOut className="w-4 h-4" />
