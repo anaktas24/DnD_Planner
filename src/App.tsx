@@ -126,7 +126,6 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-dungeon-900">
       <CampaignHeader
         onMenuClick={() => setRosterOpen(true)}
-        currentView={currentView}
         onNavigate={setCurrentView}
       />
 

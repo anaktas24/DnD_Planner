@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper, CalendarDays,
+  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper, CalendarDays, Hammer,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { updateCampaign, clearAllAvailability, clearPastAvailability, sendNotification } from '../lib/firestore'
@@ -18,6 +18,11 @@ interface ToolsMenuProps {
 
 export function SessionMenu() {
   const [open, setOpen] = useState(false)
+  const [forceMode, setForceMode] = useState(false)
+  const [forceDate, setForceDate] = useState('')
+  const [forceTime, setForceTime] = useState('')
+  const [forceSendDiscord, setForceSendDiscord] = useState(true)
+  const [forceSending, setForceSending] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const { campaign, players, allGreenDates } = useCampaignStore()
@@ -31,6 +36,57 @@ export function SessionMenu() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  async function forceSetDate() {
+    if (!forceDate) return
+    setForceSending(true)
+    try {
+      await updateCampaign({
+        nextSessionDate: forceDate,
+        nextSessionTime: forceTime || null,
+        dateVotes: {},
+        timeVotes: {},
+        discordDateNotified: false,
+        discordTimeNotified: false,
+      })
+      if (forceSendDiscord && campaign?.discordWebhookUrl) {
+        const dateStr = format(parseISO(forceDate), 'EEEE, MMMM d')
+        const fields = forceTime
+          ? [
+              { name: '🗓️ Date', value: dateStr, inline: true },
+              { name: '🕐 Time', value: forceTime, inline: true },
+            ]
+          : [
+              { name: '🗓️ Date', value: dateStr, inline: true },
+              { name: '⚔️ Status', value: 'Time voting is now open', inline: true },
+            ]
+        await fetch(campaign.discordWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            embeds: [{
+              title: forceTime ? '⏰ Session confirmed!' : '📅 Session date confirmed!',
+              description: `**${campaign.name}** — Session #${campaign.sessionCount}`,
+              color: forceTime ? 0x22c55e : 0xf59e0b,
+              fields,
+              footer: { text: 'See you there, adventurers!' },
+            }],
+          }),
+        }).catch(() => {})
+        await updateCampaign({
+          discordDateNotified: true,
+          ...(forceTime ? { discordTimeNotified: true } : {}),
+        })
+      }
+    } catch (e) {
+      alert(`Failed to force set date: ${e}`)
+    }
+    setForceSending(false)
+    setForceMode(false)
+    setForceDate('')
+    setForceTime('')
+    setOpen(false)
+  }
 
   async function startCountdown() {
     try {
@@ -212,6 +268,67 @@ export function SessionMenu() {
               </div>
             </button>
           ))}
+
+          {/* Force set date — last resort manual override */}
+          <div className="border-t border-amber-900/40">
+            {!forceMode ? (
+              <button
+                onClick={() => setForceMode(true)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-orange-950/40 transition-colors"
+              >
+                <Hammer className="w-4 h-4 shrink-0 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium text-orange-300">Force set date</p>
+                  <p className="text-stone-600 text-xs">Last resort — bypass voting</p>
+                </div>
+              </button>
+            ) : (
+              <div className="px-3 py-3 space-y-2.5">
+                <p className="text-orange-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                  <Hammer className="w-3.5 h-3.5" /> Force set date
+                </p>
+                <input
+                  type="date"
+                  value={forceDate}
+                  onChange={(e) => setForceDate(e.target.value)}
+                  className="w-full bg-dungeon-900 border border-amber-800/60 rounded-lg px-2 py-1.5 text-stone-200 text-sm focus:outline-none focus:border-amber-600"
+                />
+                <input
+                  type="text"
+                  placeholder="Time (optional, e.g. 19:00)"
+                  value={forceTime}
+                  onChange={(e) => setForceTime(e.target.value)}
+                  className="w-full bg-dungeon-900 border border-amber-800/60 rounded-lg px-2 py-1.5 text-stone-200 text-sm placeholder:text-stone-600 focus:outline-none focus:border-amber-600"
+                />
+                {campaign?.discordWebhookUrl && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={forceSendDiscord}
+                      onChange={(e) => setForceSendDiscord(e.target.checked)}
+                      className="accent-amber-500"
+                    />
+                    <span className="text-stone-300 text-xs">Send to Discord</span>
+                  </label>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={forceSetDate}
+                    disabled={!forceDate || forceSending}
+                    className="flex-1 bg-orange-700 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    {forceSending ? 'Setting…' : 'Set date'}
+                  </button>
+                  <button
+                    onClick={() => { setForceMode(false); setForceDate(''); setForceTime('') }}
+                    className="px-3 py-1.5 text-stone-500 hover:text-stone-300 text-xs rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
