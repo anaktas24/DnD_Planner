@@ -9,6 +9,7 @@ export interface Player {
   confirmedDates: string[]
   declinedDates: string[]
   isDM?: boolean
+  theme?: string
 }
 
 export interface SessionNote {

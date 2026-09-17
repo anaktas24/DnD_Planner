@@ -58,7 +58,9 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   allGreenDates: () => {
     const { campaign, players } = get()
     if (players.length === 0) return []
-    const min = campaign?.minPlayers ?? players.length
+    // Wait until every player has marked at least one date
+    if (!players.every((p) => p.availability.length > 0)) return []
+    const min = Math.max(1, campaign?.minPlayers ?? players.length)
     const allDates = new Set(players.flatMap((p) => p.availability))
     return [...allDates]
       .filter((date) => players.filter((p) => p.availability.includes(date)).length >= min)
@@ -71,7 +73,7 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     const votes = campaign.dateVotes
     const totalPlayers = players.length
     if (totalPlayers === 0) return null
-    const min = campaign?.minPlayers ?? totalPlayers
+    const min = Math.max(1, campaign?.minPlayers ?? totalPlayers)
 
     const totalVotesCast = Object.values(votes).reduce((sum, ids) => sum + ids.length, 0)
     if (totalVotesCast < min) return null

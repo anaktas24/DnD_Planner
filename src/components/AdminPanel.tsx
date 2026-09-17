@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll, Users } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll, Users, LogOut } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign, upsertPlayer } from '../lib/firestore'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -25,6 +25,9 @@ export function AdminPanel() {
   const [webhook, setWebhook] = useState(campaign?.discordWebhookUrl ?? '')
   const [joinCode, setJoinCode] = useState(campaign?.joinCode ?? '')
   const [minPlayers, setMinPlayers] = useState<number>(campaign?.minPlayers ?? players.length)
+  useEffect(() => {
+    setMinPlayers(campaign?.minPlayers ?? players.length)
+  }, [campaign?.minPlayers, players.length])
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState('')
   const [savingKey, setSavingKey] = useState<string | null>(null)
@@ -136,7 +139,26 @@ export function AdminPanel() {
     })
   }
 
+  async function resignAsDM() {
+    if (!myId) return
+    setPendingConfirm({
+      title: 'Resign as Dungeon Master',
+      message: 'You will become a regular player. Someone else will need to claim admin.',
+      confirmLabel: 'Resign',
+      danger: true,
+      onConfirm: async () => {
+        setPendingConfirm(null)
+        try {
+          await setRole(myId, 'player')
+        } catch (e) {
+          alert(`Failed to resign: ${e}`)
+        }
+      },
+    })
+  }
+
   async function saveMinPlayers() {
+    if (minPlayers < 1) return
     await runSave('minPlayers', async () => {
       await updateCampaign({ minPlayers })
     })
@@ -300,6 +322,23 @@ export function AdminPanel() {
                 ))}
               </div>
               <button onClick={saveMinPlayers} disabled={savingKey === 'minPlayers'} className="btn-primary text-xs px-3 py-1.5 self-start disabled:opacity-60">{saveLabel('minPlayers')}</button>
+            </section>
+
+            {/* Resign as DM */}
+            <section className="bg-red-950/20 border border-red-900/40 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-400 font-semibold text-sm">Resign as Dungeon Master</p>
+                  <p className="text-stone-500 text-xs mt-0.5">You will become a regular player. Someone else can claim admin.</p>
+                </div>
+                <button
+                  onClick={resignAsDM}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-red-800 text-red-400 hover:bg-red-900/30 rounded-lg transition-colors text-sm shrink-0"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Resign
+                </button>
+              </div>
             </section>
 
             {/* Player management */}

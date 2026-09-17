@@ -44,6 +44,8 @@ export default function App() {
         const playerSnap = await getDoc(doc(db, 'campaigns', 'main', 'players', user.uid))
         if (playerSnap.exists()) {
           setPlayerId(user.uid)
+          const savedTheme = playerSnap.data()?.theme ?? 'dungeon'
+          document.documentElement.setAttribute('data-theme', savedTheme)
         } else {
           setPlayerId(null) // will show JoinScreen for character creation
         }

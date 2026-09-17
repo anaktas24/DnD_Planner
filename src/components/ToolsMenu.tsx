@@ -473,12 +473,20 @@ export function ProfileButton() {
     '#D499EE','#7A1FA0',
     '#FF99BB','#CC003D',
     '#FFAA80','#CC3300',
+    '#FFFFFF',
   ]
 
-  const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0] })
+  const THEMES = [
+    { id: 'dungeon', label: 'Dark Dungeon', bg: '#0f0c09', accent: '#d97706' },
+    { id: 'parchment', label: 'Parchment', bg: '#f8ead4', accent: '#643a10' },
+    { id: 'ocean', label: 'Ocean', bg: '#020a1c', accent: '#0280aa' },
+    { id: 'fairy', label: 'Bard / Fairy', bg: '#0c0418', accent: '#8424d2' },
+  ] as const
+
+  const [form, setForm] = useState({ name: me?.name ?? '', characterName: me?.characterName ?? '', characterClass: me?.characterClass ?? 'Fighter', characterRace: me?.characterRace ?? 'Human', color: me?.color ?? COLOR_PRESETS[0], theme: me?.theme ?? 'dungeon' })
 
   useEffect(() => {
-    if (me) setForm({ name: me.name, characterName: me.characterName, characterClass: me.characterClass, characterRace: me.characterRace, color: me.color })
+    if (me) setForm({ name: me.name, characterName: me.characterName, characterClass: me.characterClass, characterRace: me.characterRace, color: me.color, theme: me.theme ?? 'dungeon' })
   }, [me?.id])
 
   async function save() {
@@ -486,6 +494,7 @@ export function ProfileButton() {
     try {
       const { upsertPlayer } = await import('../lib/firestore')
       await upsertPlayer({ ...me, ...form })
+      document.documentElement.setAttribute('data-theme', form.theme)
       setOpen(false)
     } catch (e) {
       alert(`Failed to save character: ${e}`)
@@ -526,6 +535,24 @@ export function ProfileButton() {
                 {COLOR_PRESETS.map((c) => (
                   <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))} className="w-7 h-7 rounded-full transition-transform hover:scale-110"
                     style={{ background: c, outline: form.color === c ? '2px solid white' : 'none', outlineOffset: '2px' }} />
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-stone-500 text-xs mb-2">Theme</p>
+              <div className="grid grid-cols-2 gap-2">
+                {THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setForm((f) => ({ ...f, theme: t.id }))}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                      form.theme === t.id ? 'border-white/40 ring-1 ring-white/30' : 'border-transparent hover:border-white/20'
+                    }`}
+                    style={{ background: t.bg, color: t.accent }}
+                  >
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ background: t.accent }} />
+                    {t.label}
+                  </button>
                 ))}
               </div>
             </div>
