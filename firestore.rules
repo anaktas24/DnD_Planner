@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function campaignPath(cid) {
+      return /databases/$(database)/documents/campaigns/$(cid);
+    }
+
+    function isMember(cid) {
+      return signedIn() && exists(/databases/$(database)/documents/campaigns/$(cid)/players/$(request.auth.uid));
+    }
+
+    function roleIn(cid) {
+      return get(campaignPath(cid)).data.get('roles', {}).get(request.auth.uid, 'player');
+    }
+
+    function isAdmin(cid) {
+      return isMember(cid) && roleIn(cid) == 'admin';
+    }
+
+    function isEditor(cid) {
+      return isMember(cid) && roleIn(cid) in ['admin', 'editor'];
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    match /campaigns/{cid} {
+      allow read: if isMember(cid);
+
+      allow create: if signedIn();
+
+      allow update: if isAdmin(cid)
+        || (isEditor(cid) && !changedKeys().hasAny(['roles', 'discordWebhookUrl', 'initiative']))
+        || (isMember(cid) && changedKeys().hasOnly([
+              'dateVotes', 'timeVotes',
+              'nextSessionDate', 'nextSessionTime',
+              'discordDateNotified', 'discordTimeNotified'
+            ]))
+        || (isMember(cid)
+            && changedKeys().hasOnly(['roles'])
+            && !('admin' in resource.data.get('roles', {}).values())
+            && request.resource.data.roles.diff(resource.data.get('roles', {})).affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.roles[request.auth.uid] == 'admin');
+
+      allow delete: if false;
+
+      match /players/{playerId} {
+        allow get: if signedIn() && request.auth.uid == playerId;
+        allow read: if isMember(cid);
+
+        allow create: if false;
+
+        allow update: if (signedIn() && request.auth.uid == playerId && request.resource.data.id == playerId)
+          || isEditor(cid)
+          || (isMember(cid) && changedKeys().hasOnly(['confirmedDates', 'declinedDates']));
+
+        allow delete: if isAdmin(cid);
+      }
+
+      match /notes/{noteId} {
+        allow read, create, update: if isMember(cid);
+        allow delete: if isAdmin(cid);
+      }
+
+      match /blog/{postId} {
+        allow read: if isMember(cid);
+        allow create, update, delete: if isEditor(cid);
+      }
+
+      match /notifications/{notificationId} {
+        allow read, delete: if isMember(cid);
+        allow create: if isEditor(cid);
+        allow update: if isEditor(cid) || (isMember(cid) && changedKeys().hasOnly(['readBy']));
+      }
+    }
+  }
+}
