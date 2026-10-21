@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Player, Campaign, SessionNote, BlogPost, Notification } from '../types'
+import type { Player, Campaign, SessionNote, BlogPost } from '../types'
 import { todayStr } from '../lib/dates'
 
 interface CampaignStore {
@@ -7,14 +7,12 @@ interface CampaignStore {
   players: Player[]
   notes: SessionNote[]
   blogPosts: BlogPost[]
-  notifications: Notification[]
   activePlayerId: string | null
 
   setCampaign: (c: Campaign | null) => void
   setPlayers: (p: Player[]) => void
   setNotes: (n: SessionNote[]) => void
   setBlogPosts: (b: BlogPost[]) => void
-  setNotifications: (n: Notification[]) => void
   setActivePlayer: (id: string | null) => void
 
   allFreeDates: (month: Date) => string[]
@@ -27,14 +25,12 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   players: [],
   notes: [],
   blogPosts: [],
-  notifications: [],
   activePlayerId: null,
 
   setCampaign: (campaign) => set({ campaign }),
   setPlayers: (players) => set({ players }),
   setNotes: (notes) => set({ notes }),
   setBlogPosts: (blogPosts) => set({ blogPosts }),
-  setNotifications: (notifications) => set({ notifications }),
   setActivePlayer: (id) => set({ activePlayerId: id }),
 
   allFreeDates: (month) => {

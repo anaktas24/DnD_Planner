@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Sword } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { signInWithGoogle } from '../lib/firebase'
-import { upsertPlayer, migratePlayer } from '../lib/firestore'
+import { upsertPlayer } from '../lib/firestore'
 import { getInviteToken } from '../lib/invite'
 import { useCampaignStore } from '../store/useCampaignStore'
 
@@ -36,11 +36,7 @@ interface Props {
 
 export function JoinScreen({ firebaseUser, onJoined }: Props) {
   const players = useCampaignStore((s) => s.players)
-  const campaign = useCampaignStore((s) => s.campaign)
   const [signingIn, setSigningIn] = useState(false)
-  const [joinCodeInput, setJoinCodeInput] = useState('')
-  const [joinCodeError, setJoinCodeError] = useState('')
-  const [claiming, setClaiming] = useState(false)
   const [isDM, setIsDM] = useState(false)
   const [form, setForm] = useState({
     name: '',
@@ -70,26 +66,8 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
     setSigningIn(false)
   }
 
-  async function claimCharacter(oldPlayerId: string) {
-    if (!firebaseUser) return
-    setClaiming(true)
-    try {
-      await migratePlayer(oldPlayerId, firebaseUser.uid, getInviteToken() ?? undefined)
-      onJoined(firebaseUser.uid)
-    } catch (e) {
-      alert(`Failed to claim character: ${e}`)
-    } finally {
-      setClaiming(false)
-    }
-  }
-
   async function join() {
-    if (!firebaseUser || !form.name.trim() || !form.characterName.trim()) return
-    const requiredCode = campaign?.joinCode
-    if (requiredCode && joinCodeInput.trim().toLowerCase() !== requiredCode.trim().toLowerCase()) {
-      setJoinCodeError('Wrong join code.')
-      return
-    }
+    if (!firebaseUser || !form.name.trim() || (!isDM && !form.characterName.trim())) return
     setLoading(true)
     try {
       await upsertPlayer({
@@ -140,11 +118,7 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
     )
   }
 
-  // Phase 2: Signed in but no character yet — claim existing or create new
-  // Filter out any players that already have a Google UID (uid format is longer than random UUIDs — 28 chars vs 36)
-  // Actually just show all existing players as claimable options
-  const claimablePlayers = players.filter((p) => p.id !== firebaseUser.uid)
-
+  // Phase 2: Signed in but no character yet — create one
   return (
     <div className="min-h-screen bg-dungeon-900 overflow-y-auto flex items-start justify-center p-4">
       <div className="bg-dungeon-800 border border-amber-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-4 my-auto">
@@ -158,31 +132,6 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
             <img src={firebaseUser.photoURL} alt="" className="w-8 h-8 rounded-full mx-auto mt-2 opacity-60" />
           )}
         </div>
-
-        {claimablePlayers.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-amber-400 text-xs font-semibold uppercase tracking-wide">Claim your existing character</p>
-            {claimablePlayers.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => claimCharacter(p.id)}
-                disabled={claiming}
-                className="flex items-center gap-3 bg-dungeon-700 hover:bg-dungeon-600 border border-amber-900/50 rounded-xl px-4 py-3 text-left transition-colors disabled:opacity-50"
-              >
-                <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: p.color }} />
-                <div>
-                  <p className="text-stone-200 text-sm font-medium">{p.name}</p>
-                  <p className="text-stone-500 text-xs">{p.characterName} · {p.characterClass}</p>
-                </div>
-              </button>
-            ))}
-            <div className="flex items-center gap-2 my-1">
-              <div className="flex-1 h-px bg-amber-900/40" />
-              <span className="text-stone-600 text-xs">or create new</span>
-              <div className="flex-1 h-px bg-amber-900/40" />
-            </div>
-          </div>
-        )}
 
         <input
           className="input-field"
@@ -247,18 +196,6 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
             ))}
           </div>
         </div>
-
-        {campaign?.joinCode && (
-          <div className="flex flex-col gap-1">
-            <input
-              className="input-field"
-              placeholder="Join code"
-              value={joinCodeInput}
-              onChange={(e) => { setJoinCodeInput(e.target.value); setJoinCodeError('') }}
-            />
-            {joinCodeError && <p className="text-red-400 text-xs">{joinCodeError}</p>}
-          </div>
-        )}
 
         <button
           onClick={join}

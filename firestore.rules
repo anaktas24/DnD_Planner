@@ -84,12 +84,6 @@ service cloud.firestore {
         allow read: if isMember(cid);
         allow create, update, delete: if isEditor(cid);
       }
-
-      match /notifications/{notificationId} {
-        allow read, delete: if isMember(cid);
-        allow create: if isEditor(cid);
-        allow update: if isEditor(cid) || (isMember(cid) && changedKeys().hasOnly(['readBy']));
-      }
     }
   }
 }

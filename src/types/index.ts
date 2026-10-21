@@ -45,15 +45,7 @@ export interface Campaign {
   discordWebhookUrl?: string
   discordDateNotified?: boolean
   discordTimeNotified?: boolean
-  joinCode?: string | null
   minPlayers?: number
-}
-
-export interface Notification {
-  id: string
-  message: string
-  createdAt: string
-  readBy: string[] // playerIds who have read it
 }
 
 export interface BlogPost {

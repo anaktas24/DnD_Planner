@@ -13,7 +13,6 @@ import {
   orderBy,
   query,
   runTransaction,
-  deleteField,
   Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -65,31 +64,6 @@ export async function upsertPlayer(player: Omit<Player, 'id'> & { id?: string; i
   const id = player.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', id), { ...player, id }, { merge: true })
   return id
-}
-
-// Migrate old player to new Google UID (transfers data + roles, deletes old record)
-export async function migratePlayer(oldId: string, newId: string, invite?: string): Promise<void> {
-  const oldRef = doc(db, 'campaigns', CAMPAIGN_ID, 'players', oldId)
-  const newRef = doc(db, 'campaigns', CAMPAIGN_ID, 'players', newId)
-  const oldSnap = await getDoc(oldRef)
-  if (!oldSnap.exists()) return
-  const oldData = oldSnap.data()
-
-  // Copy player data to new UID
-  await setDoc(newRef, { ...oldData, id: newId, ...(invite ? { invite } : {}) }, { merge: true })
-
-  // Transfer role if old player had one
-  const campaignSnap = await getDoc(doc(db, 'campaigns', CAMPAIGN_ID))
-  const roles: Record<string, string> = campaignSnap.data()?.roles ?? {}
-  if (roles[oldId]) {
-    await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID), {
-      [`roles.${newId}`]: roles[oldId],
-      [`roles.${oldId}`]: deleteField(),
-    })
-  }
-
-  // Delete old player doc
-  await deleteDoc(oldRef)
 }
 
 export async function kickPlayer(playerId: string): Promise<void> {
@@ -212,42 +186,6 @@ export function subscribeNotes(cb: (notes: SessionNote[]) => void): Unsubscribe 
 export async function upsertNote(note: Omit<SessionNote, 'id'> & { id?: string }): Promise<void> {
   const id = note.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notes', id), { ...note, id }, { merge: true })
-}
-
-// ── Notifications ─────────────────────────────────────────────────────────────
-
-export function subscribeNotifications(cb: (n: import('../types').Notification[]) => void): Unsubscribe {
-  return onSnapshot(
-    query(collection(db, 'campaigns', CAMPAIGN_ID, 'notifications'), orderBy('createdAt', 'desc')),
-    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as import('../types').Notification)))
-  )
-}
-
-export async function sendNotification(message: string): Promise<void> {
-  const id = crypto.randomUUID()
-  await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', id), {
-    id,
-    message,
-    createdAt: new Date().toISOString(),
-    readBy: [],
-  })
-}
-
-export async function markNotificationRead(notificationId: string, playerId: string): Promise<void> {
-  await updateDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', notificationId), {
-    readBy: arrayUnion(playerId),
-  })
-}
-
-export async function deleteNotification(notificationId: string): Promise<void> {
-  await deleteDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'notifications', notificationId))
-}
-
-export async function clearAllNotifications(): Promise<void> {
-  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'notifications'))
-  const batch = writeBatch(db)
-  snap.docs.forEach((d) => batch.delete(d.ref))
-  await batch.commit()
 }
 
 // ── Blog ──────────────────────────────────────────────────────────────────────

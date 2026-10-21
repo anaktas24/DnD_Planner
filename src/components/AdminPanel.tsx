@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, KeyRound, Scroll, Users, LogOut } from 'lucide-react'
+import { Shield, UserX, RefreshCw, Pin, MapPin, Crown, ChevronDown, Webhook, Scroll, Users, LogOut } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { setRole, claimAdmin, kickPlayer, resetPlayerAvailability, updateCampaign, upsertPlayer } from '../lib/firestore'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -23,7 +23,6 @@ export function AdminPanel() {
   const [announcement, setAnnouncement] = useState(campaign?.pinnedAnnouncement ?? '')
   const [location, setLocation] = useState(campaign?.sessionLocation ?? '')
   const [webhook, setWebhook] = useState(campaign?.discordWebhookUrl ?? '')
-  const [joinCode, setJoinCode] = useState(campaign?.joinCode ?? '')
   const [minPlayers, setMinPlayers] = useState<number>(campaign?.minPlayers ?? players.length)
   useEffect(() => {
     setMinPlayers(campaign?.minPlayers ?? players.length)
@@ -130,12 +129,6 @@ export function AdminPanel() {
   async function saveWebhook() {
     await runSave('webhook', async () => {
       await updateCampaign({ discordWebhookUrl: webhook.trim() || undefined })
-    })
-  }
-
-  async function saveJoinCode() {
-    await runSave('joinCode', async () => {
-      await updateCampaign({ joinCode: joinCode.trim() || null })
     })
   }
 
@@ -272,30 +265,6 @@ export function AdminPanel() {
               <div className="flex gap-2">
                 <button onClick={saveWebhook} disabled={savingKey === 'webhook'} className="btn-primary text-xs px-3 py-1.5 disabled:opacity-60">{saveLabel('webhook')}</button>
                 <button onClick={testWebhook} className="text-xs px-3 py-1.5 border border-amber-700 text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">Test</button>
-              </div>
-            </section>
-
-            {/* Join Code */}
-            <section className="bg-dungeon-800 border border-amber-900/30 rounded-xl p-4 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-amber-500" />
-                <h3 className="text-amber-400 font-semibold text-sm">Join Code</h3>
-              </div>
-              <p className="text-stone-500 text-xs">Players must enter this code when creating their character. Leave empty to allow anyone to join.</p>
-              <input
-                className="input-field"
-                placeholder="e.g. dragonslayer42"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-              />
-              <div className="flex gap-2">
-                <button onClick={saveJoinCode} disabled={savingKey === 'joinCode'} className="btn-primary text-xs px-3 py-1.5 disabled:opacity-60">{saveLabel('joinCode')}</button>
-                {joinCode && (
-                  <button onClick={() => { setJoinCode(''); updateCampaign({ joinCode: null }) }}
-                    className="text-stone-500 hover:text-stone-300 text-xs px-3 py-1.5">
-                    Clear
-                  </button>
-                )}
               </div>
             </section>
 
