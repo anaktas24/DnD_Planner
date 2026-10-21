@@ -17,6 +17,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './firebase'
+import { todayStr } from './dates'
 import type { Player, Campaign, SessionNote, BlogPost, Role } from '../types'
 
 const CAMPAIGN_ID = 'main'
@@ -60,14 +61,14 @@ export function subscribePlayers(cb: (players: Player[]) => void): Unsubscribe {
   })
 }
 
-export async function upsertPlayer(player: Omit<Player, 'id'> & { id?: string }): Promise<string> {
+export async function upsertPlayer(player: Omit<Player, 'id'> & { id?: string; invite?: string }): Promise<string> {
   const id = player.id ?? crypto.randomUUID()
   await setDoc(doc(db, 'campaigns', CAMPAIGN_ID, 'players', id), { ...player, id }, { merge: true })
   return id
 }
 
 // Migrate old player to new Google UID (transfers data + roles, deletes old record)
-export async function migratePlayer(oldId: string, newId: string): Promise<void> {
+export async function migratePlayer(oldId: string, newId: string, invite?: string): Promise<void> {
   const oldRef = doc(db, 'campaigns', CAMPAIGN_ID, 'players', oldId)
   const newRef = doc(db, 'campaigns', CAMPAIGN_ID, 'players', newId)
   const oldSnap = await getDoc(oldRef)
@@ -75,7 +76,7 @@ export async function migratePlayer(oldId: string, newId: string): Promise<void>
   const oldData = oldSnap.data()
 
   // Copy player data to new UID
-  await setDoc(newRef, { ...oldData, id: newId }, { merge: true })
+  await setDoc(newRef, { ...oldData, id: newId, ...(invite ? { invite } : {}) }, { merge: true })
 
   // Transfer role if old player had one
   const campaignSnap = await getDoc(doc(db, 'campaigns', CAMPAIGN_ID))
@@ -149,21 +150,14 @@ export async function clearAllAvailability(): Promise<void> {
   await batch.commit()
 }
 
-export async function clearPastAvailability(confirmedSessionDate: string | null): Promise<void> {
-  // Clear dates from months before the session month, keeping the session month and beyond
-  const today = new Date().toISOString().slice(0, 10)
-  const base = confirmedSessionDate ?? today
-  const [year, month] = base.split('-').map(Number)
-  // Last day of the month before the session month
-  const prevYear = month === 1 ? year - 1 : year
-  const prevMonth = month === 1 ? 12 : month - 1
-  const lastDayNum = new Date(prevYear, prevMonth, 0).getDate()
-  const cutoff = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`
+export async function clearPastAvailability(): Promise<void> {
+  // Clear every date before today (local time), keeping today and the future
+  const today = todayStr()
   const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
   const batch = writeBatch(db)
   snap.docs.forEach((docSnap) => {
     const data = docSnap.data()
-    const filter = (dates: string[]) => (dates ?? []).filter((d) => d > cutoff)
+    const filter = (dates: string[]) => (dates ?? []).filter((d) => d >= today)
     batch.update(doc(db, 'campaigns', CAMPAIGN_ID, 'players', docSnap.id), {
       availability: filter(data.availability),
       confirmedDates: filter(data.confirmedDates),

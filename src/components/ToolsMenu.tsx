@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Bell, Send, LogOut, PartyPopper, CalendarDays, Hammer,
+  Trash2, UserX, Copy, Check, Shield, Send, LogOut, PartyPopper, CalendarDays, Hammer,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { updateCampaign, clearAllAvailability, clearPastAvailability, sendNotification } from '../lib/firestore'
+import { updateCampaign, clearAllAvailability, clearPastAvailability } from '../lib/firestore'
 import { signOutUser } from '../lib/firebase'
 
 type View = 'home' | 'blog' | 'admin'
@@ -157,10 +157,9 @@ export function SessionMenu() {
   }
 
   async function clearPastDates() {
-    const sessionDate = campaign?.nextSessionDate ?? null
-    if (!confirm('Clear availability from months before the session month? This month and future dates stay.')) return
+    if (!confirm('Clear all availability before today? Today and future dates stay.')) return
     try {
-      await clearPastAvailability(sessionDate)
+      await clearPastAvailability()
       await updateCampaign({ dateVotes: {} })
     } catch (e) {
       alert(`Failed to clear past dates: ${e}`)
@@ -180,7 +179,7 @@ export function SessionMenu() {
     {
       icon: Trash2,
       label: 'Clear past dates',
-      sublabel: 'Wipe this month, keep future availability',
+      sublabel: 'Wipe dates before today, keep the rest',
       onClick: clearPastDates,
       disabled: false,
     },
@@ -273,19 +272,24 @@ export function SessionMenu() {
           <div className="border-t border-amber-900/40">
             {!forceMode ? (
               <button
-                onClick={() => setForceMode(true)}
+                onClick={() => {
+                  // Pre-fill with the current session so you can just add or change the time
+                  setForceDate(campaign?.nextSessionDate ?? '')
+                  setForceTime(campaign?.nextSessionTime ?? '')
+                  setForceMode(true)
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-orange-950/40 transition-colors"
               >
                 <Hammer className="w-4 h-4 shrink-0 text-orange-500" />
                 <div>
-                  <p className="text-sm font-medium text-orange-300">Force set date</p>
+                  <p className="text-sm font-medium text-orange-300">Force set date & time</p>
                   <p className="text-stone-600 text-xs">Last resort — bypass voting</p>
                 </div>
               </button>
             ) : (
               <div className="px-3 py-3 space-y-2.5">
                 <p className="text-orange-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                  <Hammer className="w-3.5 h-3.5" /> Force set date
+                  <Hammer className="w-3.5 h-3.5" /> Force set date & time
                 </p>
                 <input
                   type="date"
@@ -293,9 +297,9 @@ export function SessionMenu() {
                   onChange={(e) => setForceDate(e.target.value)}
                   className="w-full bg-dungeon-900 border border-amber-800/60 rounded-lg px-2 py-1.5 text-stone-200 text-sm focus:outline-none focus:border-amber-600"
                 />
+                <label className="block text-stone-500 text-xs">Time (optional)</label>
                 <input
-                  type="text"
-                  placeholder="Time (optional, e.g. 19:00)"
+                  type="time"
                   value={forceTime}
                   onChange={(e) => setForceTime(e.target.value)}
                   className="w-full bg-dungeon-900 border border-amber-800/60 rounded-lg px-2 py-1.5 text-stone-200 text-sm placeholder:text-stone-600 focus:outline-none focus:border-amber-600"
@@ -317,7 +321,7 @@ export function SessionMenu() {
                     disabled={!forceDate || forceSending}
                     className="flex-1 bg-orange-700 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    {forceSending ? 'Setting…' : 'Set date'}
+                    {forceSending ? 'Setting…' : 'Set'}
                   </button>
                   <button
                     onClick={() => { setForceMode(false); setForceDate(''); setForceTime('') }}
@@ -340,8 +344,6 @@ export function SessionMenu() {
 export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
   const [open, setOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [reminderOpen, setReminderOpen] = useState(false)
-  const [reminderText, setReminderText] = useState('')
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -413,17 +415,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
     setOpen(false)
   }
 
-  async function sendReminder() {
-    if (!reminderText.trim()) return
-    try {
-      await sendNotification(reminderText.trim())
-      setReminderText('')
-      setReminderOpen(false)
-    } catch (e) {
-      alert(`Failed to send reminder: ${e}`)
-    }
-  }
-
   const items = [
     {
       icon: copied ? Check : Copy,
@@ -438,13 +429,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
       sublabel: 'Send current session info to Discord',
       onClick: postToDiscord,
       disabled: !campaign?.discordWebhookUrl,
-    },
-    {
-      icon: Bell,
-      label: 'Send Reminder',
-      sublabel: 'Push a notification to all players',
-      onClick: () => { setReminderOpen(true); setOpen(false) },
-      disabled: false,
     },
     {
       icon: ScrollText,
@@ -501,35 +485,6 @@ export function ToolsMenu({ onNavigate }: ToolsMenuProps) {
           </div>
         )}
       </div>
-
-      {/* Send reminder modal */}
-      {reminderOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setReminderOpen(false)}>
-          <div className="bg-dungeon-900 border border-amber-800 rounded-xl w-full max-w-sm mx-4 p-5 shadow-2xl flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-amber-400 font-bold" style={{ fontFamily: 'Cinzel, serif' }}>Send Reminder</h3>
-              <button onClick={() => setReminderOpen(false)} className="text-stone-500 hover:text-stone-300">✕</button>
-            </div>
-            <textarea
-              className="input-field resize-none"
-              rows={3}
-              placeholder="e.g. Session this Saturday at 7pm — mark your dates!"
-              value={reminderText}
-              onChange={(e) => setReminderText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendReminder())}
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button onClick={sendReminder} disabled={!reminderText.trim()} className="btn-primary flex-1 disabled:opacity-50">
-                Send
-              </button>
-              <button onClick={() => setReminderOpen(false)} className="text-stone-500 hover:text-stone-300 px-3 text-sm">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Session history modal */}
       {historyOpen && (

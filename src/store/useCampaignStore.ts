@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Player, Campaign, SessionNote, BlogPost, Notification } from '../types'
+import { todayStr } from '../lib/dates'
 
 interface CampaignStore {
   campaign: Campaign | null
@@ -40,11 +41,13 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     const { campaign, players } = get()
     if (players.length === 0) return []
     const min = campaign?.minPlayers ?? players.length
+    const today = todayStr()
     const allDates = new Set(players.flatMap((p) => p.availability))
     const common: string[] = []
     allDates.forEach((date) => {
       const d = new Date(date)
       if (
+        date >= today &&
         d.getFullYear() === month.getFullYear() &&
         d.getMonth() === month.getMonth() &&
         players.filter((p) => p.availability.includes(date)).length >= min
@@ -61,9 +64,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     // Wait until every player has marked at least one date
     if (!players.every((p) => p.availability.length > 0)) return []
     const min = Math.max(1, campaign?.minPlayers ?? players.length)
+    const today = todayStr()
     const allDates = new Set(players.flatMap((p) => p.availability))
     return [...allDates]
-      .filter((date) => players.filter((p) => p.availability.includes(date)).length >= min)
+      .filter((date) => date >= today && players.filter((p) => p.availability.includes(date)).length >= min)
       .sort()
   },
 

@@ -3,6 +3,7 @@ import { Sword } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { signInWithGoogle } from '../lib/firebase'
 import { upsertPlayer, migratePlayer } from '../lib/firestore'
+import { getInviteToken } from '../lib/invite'
 import { useCampaignStore } from '../store/useCampaignStore'
 
 const CLASS_OPTIONS = [
@@ -73,7 +74,7 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
     if (!firebaseUser) return
     setClaiming(true)
     try {
-      await migratePlayer(oldPlayerId, firebaseUser.uid)
+      await migratePlayer(oldPlayerId, firebaseUser.uid, getInviteToken() ?? undefined)
       onJoined(firebaseUser.uid)
     } catch (e) {
       alert(`Failed to claim character: ${e}`)
@@ -98,6 +99,7 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
         availability: [],
         confirmedDates: [],
         declinedDates: [],
+        invite: getInviteToken() ?? undefined,
       })
       onJoined(firebaseUser.uid)
     } catch (e) {

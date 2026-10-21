@@ -3,7 +3,6 @@ import { Swords, Menu, Sword } from 'lucide-react'
 import { parseISO, isPast, differenceInDays } from 'date-fns'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { ToolsMenu, SessionMenu, ProfileButton } from './ToolsMenu'
-import { NotificationBell } from './NotificationBell'
 import { D20Icon } from './D20Icon'
 
 const BLOG_SEEN_KEY = 'dnd_blog_last_seen'
@@ -114,7 +113,6 @@ export function CampaignHeader({ onMenuClick, onNavigate }: Props) {
                 <ToolsMenu onNavigate={onNavigate} />
               </div>
             )}
-            <NotificationBell />
             <ProfileButton />
           </div>
         </div>

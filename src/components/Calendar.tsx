@@ -9,13 +9,15 @@ import { toggleAvailability, setVote } from '../lib/firestore'
 import { DayModal } from './DayModal'
 import { DatePoll } from './DatePoll'
 import { TimePoll } from './TimePoll'
+import { todayStr } from '../lib/dates'
 
 export function Calendar() {
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const { players, activePlayerId, allFreeDates, campaign } = useCampaignStore()
-  const confirmedDate = campaign?.nextSessionDate ?? null
+  // A session date that's already past is done — don't highlight it anymore
+  const confirmedDate = campaign?.nextSessionDate && campaign.nextSessionDate >= todayStr() ? campaign.nextSessionDate : null
 
   // Swipe gesture handling
   const touchStartX = useRef<number | null>(null)
@@ -130,7 +132,7 @@ export function Calendar() {
               disabled={!inMonth}
               aria-label={`${format(day, 'MMMM d, yyyy')}${isConfirmed ? ', confirmed session' : isFree ? ', all players free' : activeMarked ? ', marked available' : ''}`}
               className={`
-                relative rounded-lg aspect-square flex flex-col items-center justify-start pt-1 pb-0.5 px-0.5
+                relative rounded-lg aspect-square flex flex-col items-center justify-start pt-1 pb-0.5 px-0.5 overflow-hidden
                 transition-all duration-150 border
                 ${!inMonth ? 'opacity-0 pointer-events-none' : ''}
                 ${isConfirmed ? 'bg-emerald-700/60 border-emerald-400/80 hover:bg-emerald-700/70' : isFree ? 'bg-emerald-900/50 border-emerald-600/60 hover:bg-emerald-800/60' : 'border-transparent hover:bg-dungeon-800'}
@@ -158,9 +160,16 @@ export function Calendar() {
                 </div>
               )}
 
-              {/* Player availability names */}
+              {/* Player availability — dots on mobile, names on larger screens */}
+              {!isConfirmed && availablePlayers.length > 0 && (
+                <div className="flex md:hidden flex-wrap justify-center gap-0.5 w-full mt-auto mb-0.5">
+                  {availablePlayers.map((p) => (
+                    <span key={p.id} className="w-1.5 h-1.5 rounded-full" style={{ background: p.color }} />
+                  ))}
+                </div>
+              )}
               {!isConfirmed && (
-                <div className="flex flex-col gap-0.5 w-full mt-auto px-0.5 mb-0.5">
+                <div className="hidden md:flex flex-col gap-0.5 w-full mt-auto px-0.5 mb-0.5">
                   {availablePlayers.map((p) => (
                     <span key={p.id} className="flex items-center gap-0.5">
                       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.color }} />

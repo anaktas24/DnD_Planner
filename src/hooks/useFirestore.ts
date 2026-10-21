@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { subscribeCampaign, subscribePlayers, subscribeNotes, subscribeBlog, subscribeNotifications, claimWebhookSend } from '../lib/firestore'
+import { subscribeCampaign, subscribePlayers, subscribeNotes, subscribeBlog, claimWebhookSend } from '../lib/firestore'
 import { useCampaignStore } from '../store/useCampaignStore'
 import { format, parseISO } from 'date-fns'
 import type { Campaign } from '../types'
@@ -18,7 +18,7 @@ async function sendDiscordWebhook(url: string, payload: object) {
 }
 
 export function useFirestore() {
-  const { setCampaign, setPlayers, setNotes, setBlogPosts, setNotifications } = useCampaignStore()
+  const { setCampaign, setPlayers, setNotes, setBlogPosts } = useCampaignStore()
 
   const prevDateRef = useRef<string | null | undefined>(undefined)
   const prevTimeRef = useRef<string | null | undefined>(undefined)
@@ -81,8 +81,7 @@ export function useFirestore() {
       subscribePlayers(setPlayers),
       subscribeNotes(setNotes),
       subscribeBlog(setBlogPosts),
-      subscribeNotifications(setNotifications),
     ]
     return () => unsubs.forEach((u) => u())
-  }, [setCampaign, setPlayers, setNotes, setBlogPosts, setNotifications])
+  }, [setCampaign, setPlayers, setNotes, setBlogPosts])
 }

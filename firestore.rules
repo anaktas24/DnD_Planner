@@ -31,6 +31,13 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    // Invite tokens: the doc id is the secret. Fetchable by exact id only, never listable.
+    // Create/delete them from the Firebase console.
+    match /invites/{token} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
     match /campaigns/{cid} {
       allow read: if isMember(cid);
 
@@ -55,7 +62,11 @@ service cloud.firestore {
         allow get: if signedIn() && request.auth.uid == playerId;
         allow read: if isMember(cid);
 
-        allow create: if false;
+        // Joining requires a valid invite token (see /invites below)
+        allow create: if signedIn() && request.auth.uid == playerId
+          && request.resource.data.id == playerId
+          && request.resource.data.get('invite', '') != ''
+          && exists(/databases/$(database)/documents/invites/$(request.resource.data.invite));
 
         allow update: if (signedIn() && request.auth.uid == playerId && request.resource.data.id == playerId)
           || isEditor(cid)
