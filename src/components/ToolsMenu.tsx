@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import {
   Settings, Play, XCircle, PlusCircle, ScrollText,
-  Trash2, UserX, Copy, Check, Shield, Send, LogOut, PartyPopper, CalendarDays, Hammer,
+  Trash2, UserX, Ban, Copy, Check, Shield, Send, LogOut, PartyPopper, CalendarDays, Hammer,
 } from 'lucide-react'
 import { useCampaignStore } from '../store/useCampaignStore'
-import { updateCampaign, clearAllAvailability, clearPastAvailability } from '../lib/firestore'
+import { updateCampaign, clearAllAvailability, clearPastAvailability, cancelSessionDate } from '../lib/firestore'
 import { signOutUser } from '../lib/firebase'
 
 type View = 'home' | 'blog' | 'admin'
@@ -108,6 +108,18 @@ export function SessionMenu() {
     setOpen(false)
   }
 
+  async function cancelSession() {
+    const date = campaign?.nextSessionDate
+    if (!date) return
+    if (!confirm(`Cancel the session on ${format(parseISO(date), 'EEEE, MMMM d')}? It will be removed from everyone's calendar and the polls reset.`)) return
+    try {
+      await cancelSessionDate(date)
+    } catch (e) {
+      alert(`Failed to cancel session: ${e}`)
+    }
+    setOpen(false)
+  }
+
   async function resetTimeOnly() {
     try {
       await updateCampaign({ nextSessionTime: null, timeVotes: {}, discordTimeNotified: false })
@@ -189,6 +201,13 @@ export function SessionMenu() {
       sublabel: greenDates.length === 1 ? `Set ${format(parseISO(greenDates[0]), 'MMM d')} as next session` : 'Need exactly 1 green date',
       onClick: startCountdown,
       disabled: greenDates.length !== 1 || !!campaign?.nextSessionDate,
+    },
+    {
+      icon: Ban,
+      label: 'Cancel session date',
+      sublabel: 'Session is off — remove the date from the calendar',
+      onClick: cancelSession,
+      disabled: !campaign?.nextSessionDate,
     },
     {
       icon: XCircle,

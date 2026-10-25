@@ -141,6 +141,28 @@ export async function clearPastAvailability(): Promise<void> {
   await batch.commit()
 }
 
+// Cancel a planned session: drop that date from everyone's calendar and reset date, time and polls
+export async function cancelSessionDate(date: string): Promise<void> {
+  const snap = await getDocs(collection(db, 'campaigns', CAMPAIGN_ID, 'players'))
+  const batch = writeBatch(db)
+  snap.docs.forEach((docSnap) => {
+    batch.update(docSnap.ref, {
+      availability: arrayRemove(date),
+      confirmedDates: arrayRemove(date),
+      declinedDates: arrayRemove(date),
+    })
+  })
+  batch.update(doc(db, 'campaigns', CAMPAIGN_ID), {
+    nextSessionDate: null,
+    nextSessionTime: null,
+    dateVotes: {},
+    timeVotes: {},
+    discordDateNotified: false,
+    discordTimeNotified: false,
+  })
+  await batch.commit()
+}
+
 // ── Date Poll ─────────────────────────────────────────────────────────────────
 
 export async function voteForDate(playerId: string, date: string, allDates: string[]): Promise<void> {
