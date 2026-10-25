@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Sword } from 'lucide-react'
 import type { User } from 'firebase/auth'
-import { signInWithGoogle } from '../lib/firebase'
+import { signInWithGoogle, signOutUser } from '../lib/firebase'
 import { upsertPlayer } from '../lib/firestore'
 import { getInviteToken } from '../lib/invite'
 import { useCampaignStore } from '../store/useCampaignStore'
@@ -131,6 +131,15 @@ export function JoinScreen({ firebaseUser, onJoined }: Props) {
           {firebaseUser.photoURL && (
             <img src={firebaseUser.photoURL} alt="" className="w-8 h-8 rounded-full mx-auto mt-2 opacity-60" />
           )}
+          <p className="text-stone-500 text-xs mt-2">
+            Signed in as <span className="text-stone-300">{firebaseUser.email}</span>
+          </p>
+          <p className="text-stone-600 text-xs mt-1">
+            Already have a character?{' '}
+            <button onClick={() => signOutUser()} className="text-amber-500 hover:text-amber-400 underline">
+              Use a different account
+            </button>
+          </p>
         </div>
 
         <input

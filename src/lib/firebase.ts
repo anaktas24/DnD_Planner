@@ -16,5 +16,7 @@ export const db = getFirestore(app)
 export const auth = getAuth(app)
 
 const provider = new GoogleAuthProvider()
+// Always show the account picker so people with several Google accounts pick the right one
+provider.setCustomParameters({ prompt: 'select_account' })
 export const signInWithGoogle = () => signInWithPopup(auth, provider)
 export const signOutUser = () => signOut(auth)
